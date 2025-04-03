@@ -146,7 +146,7 @@ void loop() {
   const float radius = 0.073; // in meters
 
   //Get slip value
-  Serial.println("Please input slip value: ");
+  // Serial.println("Please input slip value: ");
   // int slipValue = getSerialInput();
   int slipValue=5;
   
@@ -159,14 +159,23 @@ void loop() {
   //Set motor speed
   // analogWrite(motor1speedpin, pwmValue);
   // analogWrite(motor2speedpin, pwmValue);
-  
+
+  Serial.println(pwmValue);
+  linear_motor.setSpeed(255);
+  linear_motor.run(L298N::FORWARD);
+  delay(3000);
+  linear_motor.setSpeed(255);
+
+
 
   //Move forward
+  linear_motor.run(L298N::BACKWARD);
+  delay(3000);
   // digitalWrite(motor1pin1,  HIGH);
   // digitalWrite(motor1pin2, LOW);
   // digitalWrite(motor2pin1, HIGH);
   // digitalWrite(motor2pin2, LOW);
-  delay(3000);
+  // delay(3000);
 
   //Write in SD card, slip value, linear velocity, force (Load Cell), amperage (ammeter)
 
