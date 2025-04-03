@@ -75,7 +75,7 @@ void setup() {
   Serial.print("Initializing SD card...");
   if (!SD.begin(sd_cs)) {
     Serial.println("SD card initialization failed");
-    // while (1);
+    while (1);
   }
   Serial.println("initialization done.");
 
