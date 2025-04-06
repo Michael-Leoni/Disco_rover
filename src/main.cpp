@@ -7,6 +7,8 @@
 #include <L298N.h>
 #include <HX711.h>
 
+#define LC_CALIBRATION_FACTOR 10 // not actual value, just a placeholder for the time being.
+
 // Pins used so far 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, A0, A1, A2, A3, A4, A5
 // Pins not used 0, 1, 13
 
@@ -52,8 +54,7 @@ void setup() {
   //Estop button
   pinMode(eStopPin, INPUT_PULLUP);
 
-  //Scale setup
-  scale.begin(loadcell_dt, loadcell_sck);// TODO look into using the same sck for the SD card.
+
   //Driver pins
   // pinMode(motor1pin1, OUTPUT);
   // pinMode(motor1pin2, OUTPUT);
@@ -106,6 +107,13 @@ void setup() {
   else {
     Serial.println("error opening test.txt");
   }
+
+//Basic Loadcell setup
+  scale.begin(loadcell_dt, loadcell_sck);// TODO look into using the same sck for the SD card.
+  scale.set_scale(LC_CALIBRATION_FACTOR);
+  scale.tare();
+
+  //All readings using the load cell going forward should just call scale.get_units()
 }
 
 /*
@@ -150,7 +158,7 @@ void loop() {
     }
   }
 
-  //Load Cell test code
+  //Load Cell test code / for calibration
   if(scale.is_ready()){
     scale.set_scale();
     Serial.println(F("Remove weight from load cell. Calibration will be complete in 5 seconds..."));
@@ -202,6 +210,6 @@ void loop() {
   // delay(3000);
 
   //Write in SD card, slip value, linear velocity, force (Load Cell), amperage (ammeter)
-
-
 }
+
+
