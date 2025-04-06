@@ -43,6 +43,8 @@ const int ammeterPin = 11;
 File testfile;
 HX711 scale;
 
+int lc_reading=0;
+
 void setup() {
   // put your setup code here, to run once:
 
@@ -197,6 +199,7 @@ void loop() {
   // delay(3000);
 
   //Write in SD card, slip value, linear velocity, force (Load Cell), amperage (ammeter)
+  lc_reading = round(scale.get_units());
 }
 
 void LC_calibration_test(){
