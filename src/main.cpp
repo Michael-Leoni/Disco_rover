@@ -158,19 +158,6 @@ void loop() {
     }
   }
 
-  //Load Cell test code / for calibration
-  if(scale.is_ready()){
-    scale.set_scale();
-    Serial.println(F("Remove weight from load cell. Calibration will be complete in 5 seconds..."));
-    delay(5000);
-    scale.tare();
-    Serial.println(F("calibration complete."));
-    Serial.println(F("Place weight on scale"));
-    delay(2000);
-    long reading = scale.get_units(10);
-    Serial.print(F("result: "));
-    Serial.println(reading);
-  }
 
   //Constants
 
@@ -210,6 +197,21 @@ void loop() {
   // delay(3000);
 
   //Write in SD card, slip value, linear velocity, force (Load Cell), amperage (ammeter)
+}
+
+void LC_calibration_test(){
+  if(scale.is_ready()){
+    scale.set_scale();
+    Serial.println(F("Remove weight from load cell. Calibration will be complete in 5 seconds..."));
+    delay(5000);
+    scale.tare();
+    Serial.println(F("calibration complete."));
+    Serial.println(F("Place weight on scale"));
+    delay(2000);
+    long reading = scale.get_units(10);
+    Serial.print(F("result: "));
+    Serial.println(reading);
+  }
 }
 
 
