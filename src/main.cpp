@@ -5,11 +5,13 @@
 #include <SD.h>
 #include <SPI.h>
 #include <L298N.h>
+#include <HX711.h>
 
 // Pins used so far 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, A0, A1, A2, A3, A4, A5
 // Pins not used 0, 1, 13
 
 //pin setup
+
 const int motor1pin1 = 2;
 const int motor1pin2 = 3; // may get rid of and short in order to only drive in one direction
 const int motor1speedpin = 9;
@@ -37,6 +39,7 @@ const int encoder2_clk = A4;
 const int ammeterPin = 11;
 
 File testfile;
+HX711 scale;
 
 void setup() {
   // put your setup code here, to run once:
@@ -49,6 +52,8 @@ void setup() {
   //Estop button
   pinMode(eStopPin, INPUT_PULLUP);
 
+  //Scale setup
+  scale.begin(loadcell_dt, loadcell_sck);// TODO look into using the same sck for the SD card.
   //Driver pins
   // pinMode(motor1pin1, OUTPUT);
   // pinMode(motor1pin2, OUTPUT);
@@ -58,9 +63,6 @@ void setup() {
   // pinMode(motor2speedpin, OUTPUT);
 
   //Load cell pins
-  pinMode(loadcell_dt, INPUT);
-  pinMode(loadcell_sck, OUTPUT);
-  digitalWrite(loadcell_sck, LOW); //start low
 
   //Encoders pins
   pinMode(encoder1_dt, INPUT);
@@ -106,6 +108,14 @@ void setup() {
   }
 }
 
+/*
+#
+#
+#
+#
+#
+*/
+
 void loop() {
 
   float spoolRadius = 0.02; //measure and find value (meters) TODO
@@ -138,6 +148,19 @@ void loop() {
       delay(1000);
       }
     }
+  }
+
+  //Load Cell test code
+  if(scale.is_ready()){
+    scale.set_scale();
+    Serial.println(F("Remove weight from load cell. Calibration will be complete in 5 seconds..."));
+    scale.tare();
+    Serial.println(F("calibration complete."));
+    Serial.println(F("Place weight on scale"));
+    delay(2000);
+    long reading = scale.get_units(10);
+    Serial.print(F("result: "));
+    Serial.println(reading);
   }
 
   //Constants
