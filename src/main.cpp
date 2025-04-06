@@ -154,6 +154,7 @@ void loop() {
   if(scale.is_ready()){
     scale.set_scale();
     Serial.println(F("Remove weight from load cell. Calibration will be complete in 5 seconds..."));
+    delay(5000);
     scale.tare();
     Serial.println(F("calibration complete."));
     Serial.println(F("Place weight on scale"));
