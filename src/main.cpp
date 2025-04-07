@@ -257,6 +257,8 @@ void loop() {
 float Test_setup(){
   float slip_ratio_inc = 0.05;
   while(true){
+    selector.ReadRotary();
+    // Serial.println(selector.count);
     display.clearDisplay();
     display.setTextSize(1);
     display.setTextColor(WHITE);
@@ -266,11 +268,11 @@ float Test_setup(){
       break;
     }
   //Display the values the user is selecting
-    display.print(selector.count*slip_ratio_inc);
+    display.print(selector.count%21*slip_ratio_inc);
     display.display();
     display.setCursor(0,0);
   }
-  return selector.count*slip_ratio_inc;
+  return selector.count%21*slip_ratio_inc;
   display.clearDisplay();
   display.display();
 }
