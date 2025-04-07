@@ -105,6 +105,12 @@ void setup() {
     for(;;); // Don't proceed, loop forever
   }
 
+  display.clearDisplay();
+  display.drawBitmap(0,0,Mines_Logo,128,32,WHITE);
+  display.display();  //initialize display upon boot
+  display.setTextColor(WHITE);
+  display.setTextSize(1);
+
   //Estop button
   pinMode(eStopPin, INPUT_PULLUP);
 
@@ -131,11 +137,13 @@ void setup() {
   // pinMode(ammeterPin, INPUT);
 
   //SD Card initializtion
-  // Serial.print("Initializing SD card...");
-  // if (!SD.begin(sd_cs)) {
-  //   Serial.println("SD card initialization failed");
-  //   // while (1);
-  // }
+  Serial.print("Initializing SD card...");
+  if (!SD.begin(sd_cs)) {
+    Serial.println("SD card initialization failed");
+    display.setCursor(0,0);
+    display.println(F("SD err"));
+    display.display();
+  }
   // Serial.println("initialization done.");
 
   // testfile = SD.open("test.txt", FILE_WRITE);
@@ -163,15 +171,7 @@ void setup() {
   // else {
   //   Serial.println("error opening test.txt");
   // }
-  // Serial.println("initializing display");
-  display.clearDisplay();
-  display.drawBitmap(0,0,Mines_Logo,128,32,WHITE);
-  display.display();  //initialize display upon boot
-  display.setTextColor(WHITE);
-  display.setTextSize(1);
 
-  delay(5000);
-  Serial.println("display initialized");
 
 }
 
