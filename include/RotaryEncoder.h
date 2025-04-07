@@ -38,7 +38,6 @@ class RotaryEncoder{
   }
   
   
-  
   bool RotaryEncoder::RotaryPressed(){
     bool button_read = digitalRead(buttonPin);
     bool pressed = false;

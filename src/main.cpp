@@ -230,9 +230,6 @@ void loop() {
   int pwmValue = map(wheelAngularVelocity, 0, w_angularVelocity, 0, 255);
   pwmValue = constrain(pwmValue, 0, 255); // Ensure within limits
 
-  //Set motor speed
-  // analogWrite(motor1speedpin, pwmValue);
-  // analogWrite(motor2speedpin, pwmValue);
 
   Serial.println(pwmValue);
   linear_motor.setSpeed(255);
@@ -252,8 +249,6 @@ void loop() {
   // delay(3000);
 
   //Write in SD card, slip value, linear velocity, force (Load Cell), amperage (ammeter)
-
-
 }
 
 float Test_setup(){
