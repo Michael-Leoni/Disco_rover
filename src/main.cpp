@@ -146,6 +146,7 @@ void setup() {
     display.setCursor(0,0);
     display.println(F("SD err"));
     display.display();
+    while(true);
   }
   // Serial.println("initialization done.");
 
