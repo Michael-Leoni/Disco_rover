@@ -5,6 +5,7 @@
 #include <SD.h>
 #include <SPI.h>
 #include <L298N.h>
+#include "RotaryEncoder.h"
 #include <Wire.h>
 
 #include<Adafruit_GFX.h>
@@ -69,7 +70,7 @@ const int motor1pin2 = 3; // may get rid of and short in order to only drive in 
 const int motor1speedpin = 9;
 L298N linear_motor(motor1speedpin,motor1pin1,motor1pin2);
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT,&Wire, OLED_RESET);
-
+RotaryEncoder selector(2,3,7);
 
 const int motor2pin1 = 4;
 const int motor2pin2 = 7; // ditto
@@ -92,6 +93,8 @@ const int encoder2_clk = A4;
 const int ammeterPin = 11;
 
 File testfile;
+
+float Test_setup();
 
 void setup() {
   // put your setup code here, to run once:
@@ -171,7 +174,7 @@ void setup() {
   // else {
   //   Serial.println("error opening test.txt");
   // }
-
+  Test_setup();
 
 }
 
@@ -249,4 +252,25 @@ void loop() {
   //Write in SD card, slip value, linear velocity, force (Load Cell), amperage (ammeter)
 
 
+}
+
+float Test_setup(){
+  float slip_ratio_inc = 0.05;
+  while(true){
+    display.clearDisplay();
+    display.setTextSize(1);
+    display.setTextColor(WHITE);
+    display.println(F("Slip:"));
+
+    if(selector.RotaryPressed()){
+      break;
+    }
+  //Display the values the user is selecting
+    display.print(selector.count*slip_ratio_inc);
+    display.display();
+    display.setCursor(0,0);
+  }
+  return selector.count*slip_ratio_inc;
+  display.clearDisplay();
+  display.display();
 }
