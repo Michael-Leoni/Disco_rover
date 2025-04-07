@@ -1,3 +1,5 @@
+#ifndef TEST_CONTROL_H
+#define TEST_CONTROL_H
 #include <Wire.h>
 #include<Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
@@ -19,6 +21,59 @@
 #define SCREEN_HEIGHT 32
 #define RIGHT_OFFSET 55
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT,&Wire, OLED_RESET);
+
+class RotaryEncoder{
+  RotaryEncoder(uint8_t _pinA,uint8_t _pinB);
+  uint8_t pinA,pinB;
+  unsigned short count;
+  byte ReadRotary();
+  bool RotaryPressed();
+  bool button_prev_pressed;
+  bool aLastState;
+  bool aState;
+
+};
+
+RotaryEncoder::RotaryEncoder(uint8_t _pinA, uint8_t _pinB){
+  pinA = _pinA;
+  pinB = _pinB;
+  count = 0;
+  button_prev_pressed=false;
+  pinMode(ROTARY_A,INPUT_PULLUP);
+  pinMode(ROTARY_B,INPUT_PULLUP);
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+
+
+  button_prev_pressed = digitalRead(BUTTON_PIN);
+  aLastState = digitalRead(ROTARY_A);
+}
+
+
+
+bool RotaryEncoder::RotaryPressed(){
+  bool button_read = digitalRead(BUTTON_PIN);
+  bool pressed = false;
+  if(button_read==LOW && button_prev_pressed==HIGH){
+    pressed = true;
+  }
+  button_prev_pressed = button_read;
+  return pressed;
+}
+
+byte RotaryEncoder::ReadRotary(){ 
+  aState = digitalRead(ROTARY_A); // Reads the "current" state of the outputA
+  // If the previous and the current state of the outputA are different, that means a Pulse has occured
+  if (aState != aLastState){
+    // If the outputB state is different to the outputA state, that means the encoder is rotating clockwise
+    if (digitalRead(ROTARY_B) != aState) { 
+      count++;
+    } else {
+      count--;
+    }
+  } 
+  aLastState = aState;
+}
+
 
 // 'Mines-Logo-triangle-blue', 128x32px
 const unsigned char Mines_Logo[] PROGMEM = {
@@ -63,8 +118,8 @@ const unsigned char* myBitmapallArray[1] = {
 };
 
 
-static const char time_units[] = {'H','m','s'};
-static const unsigned int time_unit_durations[] = {3600000,60000,1000};  // miliseconds corresponding to the units
+// static const char time_units[] = {'H','m','s'};
+// static const unsigned int time_unit_durations[] = {3600000,60000,1000};  // miliseconds corresponding to the units
 
 byte duration_unit = 0; //selected unit by user for total test time.
 byte interval_unit = 2; //selected unit by user for interval time. Corresponds to above code.
@@ -76,51 +131,16 @@ unsigned int duration_ms = 0;
 byte interval=1;
 
 
-bool aState;
-bool aLastState;
 
 float humi, temp;
 
-AHT20 AHT;
-SdFat SD;
-SdFile dataFile;
 
-/*
-*Returns an quantity for iteration if the rotary wheel has been moved.
-*/
-unsigned short count = 0;
-byte ReadRotary(){ 
-   aState = digitalRead(ROTARY_A); // Reads the "current" state of the outputA
-   // If the previous and the current state of the outputA are different, that means a Pulse has occured
-   if (aState != aLastState){     
-     // If the outputB state is different to the outputA state, that means the encoder is rotating clockwise
-     if (digitalRead(ROTARY_B) != aState) { 
-       count++;
-     } else {
-       count--;
-     }
-   } 
-   aLastState = aState;
-}
 
-bool button_prev_pressed;
-bool RotaryPressed(){
-  bool button_read = digitalRead(BUTTON_PIN);
-  bool pressed = false;
-  if(button_read==LOW && button_prev_pressed==HIGH){
-    pressed = true;
-  }
-  button_prev_pressed = button_read;
-  return pressed;
-}
 
-void sendTempToHeater(byte temp){
-  return;
-}
 
-void sendFluxToLights(unsigned short flux){
-  return;
-}
+
+
+
 
 
 void setup() {
@@ -156,26 +176,13 @@ void setup() {
   display.setTextSize(1);
   display.setTextColor(WHITE);
   //        INITIALIZE SENSOR
-  AHT.begin();
-  if (!AHT.getSensor(&humi, &temp)){
-    display.println(F("SE"));
-    display.display();
-    while(true);
-  }
-
-
 
   //    INITIALIZE PINS
   pinMode(ROTARY_A,INPUT_PULLUP);
   pinMode(ROTARY_B,INPUT_PULLUP);
   pinMode(BUTTON_PIN, INPUT_PULLUP);
 
-  //    INITIALIZE INTERRUPT SERVICE
-  attachInterrupt(digitalPinToInterrupt(ROTARY_A),ReadRotary,CHANGE);
-  attachInterrupt(digitalPinToInterrupt(ROTARY_B),ReadRotary,CHANGE);
 
-  button_prev_pressed = digitalRead(BUTTON_PIN);
-  aLastState = digitalRead(ROTARY_A);
 
 
   delay(2000);
@@ -183,7 +190,7 @@ void setup() {
   display.setTextSize(1);
   display.setTextColor(WHITE);
 
-  count=30;
+  // count=30;
 
     //        Initialize Program setup
   // Print air temp option until temperature selected:
@@ -536,3 +543,5 @@ void loop() {
   }
 
   }
+
+#endif
