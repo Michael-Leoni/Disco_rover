@@ -65,23 +65,24 @@ const unsigned char* myBitmapallArray[1] = {
 // Pins not used 0, 1, 13
 
 //pin setup
-const int motor1pin1 = 3;
-const int motor1pin2 = 2; // may get rid of and short in order to only drive in one direction
-const int motor1speedpin = 9;
+const byte motor1pin1 = 3;
+const byte motor1pin2 = 2; // may get rid of and short in order to only drive in one direction
+const byte motor1speedpin = 9;
 L298N linear_motor(motor1speedpin,motor1pin1,motor1pin2);
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT,&Wire, OLED_RESET);
 RotaryEncoder selector(4,5,7);
 
-const int motor2pin1 = 4;
-const int motor2pin2 = 7; // ditto
-const int motor2speedpin = 5;
+const byte motor2pin1 = 4;
+const byte motor2pin2 = 7; // ditto
+const byte motor2speedpin = 5;
+L298N wheel_motor(motor2pin1,motor2pin2, motor2speedpin);
 
-const int loadcell_dt = 6;
-const int loadcell_sck = A0;
+const byte loadcell_dt = 6;
+const byte loadcell_sck = A0;
 
-const int sd_cs = 10;
+const byte sd_cs = 10;
 
-const int eStopPin = 12;
+const byte eStopPin = 12;
 
 // SoftwareSerial espSerial(8, A3); //(RX, TX) A voltage divider is needed for the A3 pin
 
@@ -89,7 +90,7 @@ const int encoder1_dt = A2; // enable software interupts during loop
 const int encoder1_clk = A1;
 const int encoder2_dt = A0;
 const int encoder2_clk = A4;
-const int ammeterPin = 11;
+// const int ammeterPin = 11;
 
 File testfile;
 
