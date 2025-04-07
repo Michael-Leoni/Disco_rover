@@ -65,12 +65,12 @@ const unsigned char* myBitmapallArray[1] = {
 // Pins not used 0, 1, 13
 
 //pin setup
-const int motor1pin1 = 2;
-const int motor1pin2 = 3; // may get rid of and short in order to only drive in one direction
+const int motor1pin1 = 3;
+const int motor1pin2 = 2; // may get rid of and short in order to only drive in one direction
 const int motor1speedpin = 9;
 L298N linear_motor(motor1speedpin,motor1pin1,motor1pin2);
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT,&Wire, OLED_RESET);
-RotaryEncoder selector(2,3,7);
+RotaryEncoder selector(4,5,7);
 
 const int motor2pin1 = 4;
 const int motor2pin2 = 7; // ditto
@@ -89,7 +89,6 @@ const int encoder1_dt = A2; // enable software interupts during loop
 const int encoder1_clk = A1;
 const int encoder2_dt = A0;
 const int encoder2_clk = A4;
-
 const int ammeterPin = 11;
 
 File testfile;
@@ -107,6 +106,7 @@ void setup() {
   if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
     for(;;); // Don't proceed, loop forever
   }
+  selector.begin();
 
   display.clearDisplay();
   display.drawBitmap(0,0,Mines_Logo,128,32,WHITE);
@@ -207,7 +207,7 @@ void loop() {
 
     while (true) {
     if (digitalRead(eStopPin) == HIGH) {
-      Serial.println("E-Stop Released. Restart required.");
+      Serial.println(F("E-Stop Released. Restart required."));
       delay(1000);
       }
     }

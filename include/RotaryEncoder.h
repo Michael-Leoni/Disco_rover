@@ -11,6 +11,7 @@ class RotaryEncoder{
         uint8_t pinA,pinB, buttonPin;
         short count;
         byte ReadRotary();
+        bool begin();
         bool RotaryPressed();
         bool button_prev_pressed;
         bool aLastState;
@@ -23,13 +24,17 @@ class RotaryEncoder{
     buttonPin = _buttonPin;
     count = 0;
     button_prev_pressed=false;
-    pinMode(pinA,INPUT_PULLUP);
-    pinMode(pinB,INPUT_PULLUP);
-    pinMode(buttonPin, INPUT_PULLUP);
   
   
     button_prev_pressed = digitalRead(buttonPin);
     aLastState = digitalRead(pinA);
+  }
+
+  bool RotaryEncoder::begin(){
+    pinMode(pinA,INPUT_PULLUP);
+    pinMode(pinB,INPUT_PULLUP);
+    pinMode(buttonPin, INPUT_PULLUP);
+    return true;
   }
   
   
