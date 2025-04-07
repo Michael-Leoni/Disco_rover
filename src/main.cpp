@@ -174,8 +174,8 @@ void setup() {
   // else {
   //   Serial.println("error opening test.txt");
   // }
-  Test_setup();
 
+  delay(1500);
 }
 
 void loop() {
@@ -220,7 +220,8 @@ void loop() {
   //Get slip value
   // Serial.println("Please input slip value: ");
   // int slipValue = getSerialInput();
-  int slipValue=5;
+  float slipValue=Test_setup();
+  Serial.println(slipValue);
   
   float linearVelocity = (1-slipValue)*w_angularVelocity*radius;
   float wheelAngularVelocity = linearVelocity*spoolRadius; // not totally sure on this calculation have someone double check
@@ -255,9 +256,8 @@ void loop() {
 }
 
 float Test_setup(){
-  float slip_ratio_inc = 0.05;
+  float slip_ratio = 0;
   while(true){
-    selector.ReadRotary();
     // Serial.println(selector.count);
     display.clearDisplay();
     display.setTextSize(1);
@@ -267,12 +267,15 @@ float Test_setup(){
     if(selector.RotaryPressed()){
       break;
     }
+    selector.ReadRotary();
+    slip_ratio = selector.count%21*0.05;
+    
   //Display the values the user is selecting
-    display.print(selector.count%21*slip_ratio_inc);
+    display.print(slip_ratio);
     display.display();
     display.setCursor(0,0);
   }
-  return selector.count%21*slip_ratio_inc;
   display.clearDisplay();
   display.display();
+  return slip_ratio;
 }
