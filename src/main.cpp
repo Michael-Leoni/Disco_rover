@@ -5,6 +5,7 @@
 #include <SD.h>
 #include <SPI.h>
 #include <L298N.h>
+#include <Encoder.h>
 #include "RotaryEncoder.h"
 #include <Wire.h>
 
@@ -86,11 +87,19 @@ const byte eStopPin = 12;
 
 // SoftwareSerial espSerial(8, A3); //(RX, TX) A voltage divider is needed for the A3 pin
 
-const int encoder1_dt = A2; // enable software interupts during loop
-const int encoder1_clk = A1;
-const int encoder2_dt = A0;
-const int encoder2_clk = A4;
+
+/* PIN ASSIGMENTS
+* For Encoders, one of each should be on on encoder pin for best results. both for even better results
+* 2 and 3 are already assigned to one of the motors. Currently will be looking at all pin assignments.
+*/
+const byte encoder1_dt = A2; // enable software interupts during loop
+const byte encoder1_clk = A1;
+const byte encoder2_dt = A0; //already in use
+const byte encoder2_clk = A4;  //already in use
 // const int ammeterPin = 11;
+
+Encoder LinearMotor_enc(encoder1_dt,encoder1_clk);
+Encoder WheelMotor_enc(encoder2_dt,encoder2_clk);
 
 File testfile;
 
@@ -119,23 +128,14 @@ void setup() {
   pinMode(eStopPin, INPUT_PULLUP);
 
   //Driver pins
-  // pinMode(motor1pin1, OUTPUT);
-  // pinMode(motor1pin2, OUTPUT);
-  // pinMode(motor2pin1, OUTPUT);
-  // pinMode(motor2pin2, OUTPUT);
-  // pinMode(motor1speedpin, OUTPUT);
-  // pinMode(motor2speedpin, OUTPUT);
 
   //Load cell pins
   pinMode(loadcell_dt, INPUT);
   pinMode(loadcell_sck, OUTPUT);
   digitalWrite(loadcell_sck, LOW); //start low
 
-  //Encoders pins
-  pinMode(encoder1_dt, INPUT);
-  pinMode(encoder1_clk, INPUT);
-  pinMode(encoder2_dt, INPUT);
-  pinMode(encoder2_clk, INPUT);
+
+
 
   //Ammeter pins
   // pinMode(ammeterPin, INPUT);
