@@ -59,7 +59,7 @@
 // };
 
 // #include "TestControl.h"
-File testbenchfile;
+// File testbenchfile;
 
 float Test_setup();
 bool recordData(File &myfile, float &slipValue, float &linearVelocity, float &Force);
@@ -158,17 +158,17 @@ void setup() {
   // }
 
   //open file
-  testbenchfile = SD.open("testbench.txt", FILE_WRITE);
-  if (testbenchfile) {
-    Serial.println("Reading from rest.tst:");
-    while (testbenchfile.available()) {
-      Serial.write(testbenchfile.read());
-    }
-    testbenchfile.close();
-  }
-  else {
-    Serial.println("error opening test.txt");
-  }
+  // testbenchfile = SD.open("testbench.txt", FILE_WRITE);
+  // if (testbenchfile) {
+  //   Serial.println("Reading from rest.tst:");
+  //   while (testbenchfile.available()) {
+  //     Serial.write(testbenchfile.read());
+  //   }
+  //   testbenchfile.close();
+  // }
+  // else {
+  //   Serial.println("error opening test.txt");
+  // }
 
   delay(1500);
 
@@ -218,7 +218,7 @@ void loop() {
 
   lc_reading = (float)round(scale.get_units());
 
-  recordData(testbenchfile,slipValue,linearVelocity,lc_reading);
+  // recordData(testbenchfile,slipValue,linearVelocity,lc_reading);
 
 
 
@@ -260,6 +260,7 @@ float Test_setup(){
     }
     selector.ReadRotary();
     slip_ratio = selector.count%21*0.05;
+    Serial.println(selector.count);
     
   //Display the values the user is selecting
     display.print(slip_ratio);
