@@ -66,20 +66,20 @@ const unsigned char* myBitmapallArray[1] = {
 // Pins not used 0, 1, 13
 
 //pin setup
-const byte motor1pin1 = 3;
-const byte motor1pin2 = 2; // may get rid of and short in order to only drive in one direction
+const byte motor1pin1 = 1;
+const byte motor1pin2 = A0; // may get rid of and short in order to only drive in one direction
 const byte motor1speedpin = 9;
 L298N linear_motor(motor1speedpin,motor1pin1,motor1pin2);
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT,&Wire, OLED_RESET);
-RotaryEncoder selector(4,5,7);
+RotaryEncoder selector(4,A3,7);
 
-const byte motor2pin1 = 4;
-const byte motor2pin2 = 7; // ditto
+const byte motor2pin1 = 1;
+const byte motor2pin2 = A0; // ditto
 const byte motor2speedpin = 5;
 L298N wheel_motor(motor2pin1,motor2pin2, motor2speedpin);
 
 const byte loadcell_dt = 6;
-const byte loadcell_sck = A0;
+const byte loadcell_sck = 8;
 
 const byte sd_cs = 10;
 
@@ -92,10 +92,10 @@ const byte eStopPin = 12;
 * For Encoders, one of each should be on on encoder pin for best results. both for even better results
 * 2 and 3 are already assigned to one of the motors. Currently will be looking at all pin assignments.
 */
-const byte encoder1_dt = A2; // enable software interupts during loop
+const byte encoder1_dt = 2; // enable software interupts during loop
 const byte encoder1_clk = A1;
-const byte encoder2_dt = A0; //already in use
-const byte encoder2_clk = A4;  //already in use
+const byte encoder2_dt = 3;
+const byte encoder2_clk = A2;
 // const int ammeterPin = 11;
 
 Encoder LinearMotor_enc(encoder1_dt,encoder1_clk);
@@ -194,25 +194,23 @@ void loop() {
   // }
 
   //Estop
-  if (digitalRead(eStopPin) == LOW) {
-    Serial.println("EMERGENCY STOP ACTIVATED!");
 
-    //Stop motors
-    digitalWrite(motor1pin1, LOW);
-    digitalWrite(motor1pin2, LOW);
-    digitalWrite(motor2pin1, LOW);
-    digitalWrite(motor2pin2, LOW);
-    
-    analogWrite(motor1speedpin, 0);
-    analogWrite(motor2speedpin, 0);
+  //Stop motors
+  digitalWrite(motor1pin1, LOW);
+  digitalWrite(motor1pin2, LOW);
+  digitalWrite(motor2pin1, LOW);
+  digitalWrite(motor2pin2, LOW);
+  
+  analogWrite(motor1speedpin, 0);
+  analogWrite(motor2speedpin, 0);
 
-    while (true) {
-    if (digitalRead(eStopPin) == HIGH) {
-      Serial.println(F("E-Stop Released. Restart required."));
-      delay(1000);
-      }
+  while (true) {
+  if (digitalRead(eStopPin) == HIGH) {
+    Serial.println(F("E-Stop Released. Restart required."));
+    delay(1000);
     }
   }
+  
 
   //Constants
 
