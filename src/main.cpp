@@ -61,6 +61,7 @@ File testbenchfile;
 
 float Test_setup();
 bool recordData(File &myfile, float &slipValue, float &linearVelocity, float &Force);
+bool createAndOpen(File &newfile);
 
 // Pins used so far 2, 4, 5, 6, 8, 9, 10, 11, 12, 13, A0, A1, A2, A3, A4, A5
 // Pins not used 0, 1, 3, 7
@@ -85,6 +86,10 @@ const byte sd_cs = 10;
 const byte sd_sck = 13;
 const byte sd_mosi = 11; //must be 11
 const byte sd_miso = 12; //must be 12
+byte file_num;
+char file_num_char[3];
+char filename[13];
+
 
 // const byte eStopPin = 12;
 
@@ -98,6 +103,8 @@ HX711 scale;
 float lc_reading=0;
 
 void setup() {
+
+  filename[0] = '\0';
   // put your setup code here, to run once:
   Serial.begin(9600);
   // espSerial.begin(9600); //if seeing gibberish change 9600 to 115200
@@ -155,20 +162,9 @@ void setup() {
   //   Serial.println("error opening test.txt");
   // }
 
-  //open file
-  Serial.println(SD.exists("test1.txt"));
-  testbenchfile = SD.open("/test1.txt",FILE_WRITE);
-  if (testbenchfile) {
-    Serial.println("Reading from testbench.txt:");
-    // while (testbenchfile.available()) {
-    //   Serial.write(testbenchfile.read());
-    // }
-  }
-  else {
-    Serial.println("error opening testbench.txt");
-    while(1);
-  }
-
+  //Should create a new file.
+  file_num=0;
+  
   delay(1500);
 
 
@@ -177,6 +173,7 @@ void setup() {
   scale.set_scale(LC_CALIBRATION_FACTOR);
   scale.tare();
 
+  
   //All readings using the load cell going forward should just call scale.get_units()
 }
 
@@ -208,6 +205,8 @@ void loop() {
   float slipValue=Test_setup();
   // float slipValue = 0.5;
   Serial.println(slipValue);
+
+
   
   float linearVelocity = (1-slipValue)*w_angularVelocity*radius;
   float wheelAngularVelocity = linearVelocity*spoolRadius; // not totally sure on this calculation have someone double check
@@ -218,9 +217,6 @@ void loop() {
 
   lc_reading = (float)round(scale.get_units());
 
-  recordData(testbenchfile,slipValue,linearVelocity,lc_reading);
-  delay(5000);
-  testbenchfile.close();
 
 
 }
@@ -237,7 +233,6 @@ void loop() {
  */
 bool recordData(File &myfile, float &slipValue, float &linearVelocity, float &Force){
   //Write in SD card, slip value, linear velocity, force (Load Cell), amperage (ammeter)
-    myfile.println("Slip value,Linear velocity,Force");
     myfile.print(slipValue);
     myfile.print(",");
     myfile.print(linearVelocity);
@@ -245,8 +240,6 @@ bool recordData(File &myfile, float &slipValue, float &linearVelocity, float &Fo
     myfile.println(Force); 
     Serial.println("writing to file");
 }
-
-
 
 float Test_setup(){
   float slip_ratio = 0;
@@ -287,6 +280,39 @@ void LC_calibration_test(){
     Serial.print(F("result: "));
     Serial.println(reading);
   }
+}
+
+/**
+ * @brief Create a And Open a file on the SD card with a new file number. Opens to file object passed as parameter.
+ * 
+ * @return true 
+ * @return false 
+ */
+bool createAndOpen(File &newfile){
+  do{
+    filename[0] = '\0';
+    sprintf(file_num_char,"%d",file_num);
+    strcat(filename,"test");
+    strcat(filename,file_num_char);
+    strcat(filename,".txt");
+    file_num++;
+  //open file
+  }while(SD.exists(filename));
+  Serial.print("Attempting to open ");
+  Serial.println(filename);
+
+  newfile = SD.open(filename,FILE_WRITE);
+  if (newfile) {
+    Serial.print("Opening: ");
+    Serial.print(filename);
+    return true;
+  }
+  else {
+    Serial.println("error opening testbench.txt");
+    return false;
+  }
+  newfile.println("Slip value,Linear velocity,Force");
+
 }
 
 
