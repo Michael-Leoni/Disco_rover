@@ -3,6 +3,8 @@
 #include <SD.h>
 #include "HX711.h"
 #include <L298N.h>
+
+#define LC_CALIBRATION_FACTOR 10 // not actual value, just a placeholder for the time being.
 #include "RotaryEncoder.h"
 #include <Wire.h>
 
@@ -84,7 +86,7 @@ const int sd_sck = 13;
 const int sd_mosi = 11; //must be 11
 const int sd_miso = 12; //must be 12
 
-//const int eStopPin = 3;
+const int eStopPin = 12;
 
 SoftwareSerial espSerial(8, A3); //(RX, TX) A voltage divider is needed for the A3 pin
 
@@ -94,7 +96,9 @@ const int encoder2_dt = A0;
 const int encoder2_clk = A4;
 
 
-float Test_setup();
+HX711 scale;
+
+int lc_reading=0;
 
 void setup() {
   // put your setup code here, to run once:
@@ -177,7 +181,23 @@ void setup() {
   }
 
   delay(1500);
+
+
+//Basic Loadcell setup
+  scale.begin(loadcell_dt, loadcell_sck);// TODO look into using the same sck for the SD card.
+  scale.set_scale(LC_CALIBRATION_FACTOR);
+  scale.tare();
+
+  //All readings using the load cell going forward should just call scale.get_units()
 }
+
+/*
+#
+#
+#
+#
+#
+*/
 
 void loop() {
 
@@ -256,4 +276,23 @@ float Test_setup(){
   display.clearDisplay();
   display.display();
   return slip_ratio;
+
+  lc_reading = round(scale.get_units());
 }
+
+void LC_calibration_test(){
+  if(scale.is_ready()){
+    scale.set_scale();
+    Serial.println(F("Remove weight from load cell. Calibration will be complete in 5 seconds..."));
+    delay(5000);
+    scale.tare();
+    Serial.println(F("calibration complete."));
+    Serial.println(F("Place weight on scale"));
+    delay(2000);
+    long reading = scale.get_units(10);
+    Serial.print(F("result: "));
+    Serial.println(reading);
+  }
+}
+
+
