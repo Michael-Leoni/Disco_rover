@@ -200,3 +200,23 @@ void loop() {
   // }
 
 }
+
+/**
+ * @brief Writes parameter data to an opened csv file line.
+ * 
+ * @param myfile opened and initialized SD card file
+ * @param slipValue Slip value for test
+ * @param linearVelocity Linear Velocity of Test
+ * @param Force Force recorded from Load cell.
+ * @return true 
+ * @return false 
+ */
+bool recordData(File &myfile, float &slipValue, float &linearVelocity, float &Force){
+  //Write in SD card, slip value, linear velocity, force (Load Cell), amperage (ammeter)
+    myfile.println("Slip value,Linear velocity,Force,Amperage");
+    myfile.print(slipValue);
+    myfile.print(",");
+    myfile.print(linearVelocity);
+    myfile.print(",");
+    myfile.println(Force);
+}
