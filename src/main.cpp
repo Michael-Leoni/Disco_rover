@@ -4,7 +4,7 @@
 #include "HX711.h"
 #include <L298N.h>
 
-#define LC_CALIBRATION_FACTOR 10 // not actual value, just a placeholder for the time being.
+#define LC_CALIBRATION_FACTOR 9771.09643232 // not actual value, just a placeholder for the time being.
 #include "RotaryEncoder.h"
 #include <Wire.h>
 
@@ -101,6 +101,9 @@ HX711 scale;
 
 int lc_reading=0;
 
+void LC_calibration_test();
+float Test_setup();
+
 void setup() {
   // put your setup code here, to run once:
 
@@ -108,17 +111,17 @@ void setup() {
   // espSerial.begin(9600); //if seeing gibberish change 9600 to 115200
   while (!Serial) {}
 
-  //display initialization
-  if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
-    for(;;); // Don't proceed, loop forever
-  }
-  selector.begin();
+  // //display initialization
+  // if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+  //   for(;;); // Don't proceed, loop forever
+  // }
+  // selector.begin();
 
-  display.clearDisplay();
-  display.drawBitmap(0,0,Mines_Logo,128,32,WHITE);
-  display.display();  //initialize display upon boot
-  display.setTextColor(WHITE);
-  display.setTextSize(1);
+  // display.clearDisplay();
+  // display.drawBitmap(0,0,Mines_Logo,128,32,WHITE);
+  // display.display();  //initialize display upon boot
+  // display.setTextColor(WHITE);
+  // display.setTextSize(1);
 
   //Estop button
   //pinMode(eStopPin, INPUT_PULLUP);
@@ -145,14 +148,14 @@ void setup() {
   // pinMode(ammeterPin, INPUT);
 
   //SD Card initializtion
-  Serial.print("Initializing SD card...");
-  if (!SD.begin(sd_cs)) {
-    Serial.println("SD card initialization failed");
-    display.setCursor(0,0);
-    display.println(F("SD err"));
-    display.display();
-    while(true);
-  }
+  // Serial.print("Initializing SD card...");
+  // if (!SD.begin(sd_cs)) {
+  //   Serial.println("SD card initialization failed");
+  //   display.setCursor(0,0);
+  //   display.println(F("SD err"));
+  //   display.display();
+  //   while(true);
+  // }
   // Serial.println("initialization done.");
 
   // testfile = SD.open("test.txt", FILE_WRITE);
@@ -201,8 +204,9 @@ void setup() {
 */
 
 void loop() {
+  Serial.println(scale.get_units(),1);
 
-  delay(1000);
+  // delay(1000);
   // testbenchfile = SD.open("testbench.txt", FILE_WRITE);
   // if (testbenchfile) {
   //   Serial.print("testbench.txt open...");
@@ -239,14 +243,14 @@ void loop() {
   //Get slip value
   // Serial.println("Please input slip value: ");
   // int slipValue = getSerialInput();
-  float slipValue=Test_setup();
-  Serial.println(slipValue);
+  // float slipValue=Test_setup();
+  // Serial.println(slipValue);
   
-  float linearVelocity = (1-slipValue)*w_angularVelocity*radius;
-  float wheelAngularVelocity = linearVelocity*spoolRadius; // not totally sure on this calculation have someone double check
+  // float linearVelocity = (1-slipValue)*w_angularVelocity*radius;
+  // float wheelAngularVelocity = linearVelocity*spoolRadius; // not totally sure on this calculation have someone double check
 
-  int pwmValue = map(wheelAngularVelocity, 0, w_angularVelocity, 0, 255);
-  pwmValue = constrain(pwmValue, 0, 255); // Ensure within limits
+  // int pwmValue = map(wheelAngularVelocity, 0, w_angularVelocity, 0, 255);
+  // pwmValue = constrain(pwmValue, 0, 255); // Ensure within limits
 
 
     // //Move forward
