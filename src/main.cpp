@@ -269,6 +269,7 @@ float Test_setup(){
   }
   display.clearDisplay();
   display.display();
+  slip_ratio = 0.5;
   return slip_ratio;
 }
 
