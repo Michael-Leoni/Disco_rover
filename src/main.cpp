@@ -1,9 +1,7 @@
-#include <Arduino.h>
-
 //librarys - still need to import
-// #include <SoftwareSerial.h>
+#include <SoftwareSerial.h>
 #include <SD.h>
-#include <SPI.h>
+#include "HX711.h"
 #include <L298N.h>
 #include "RotaryEncoder.h"
 #include <Wire.h>
@@ -60,9 +58,10 @@ const unsigned char* myBitmapallArray[1] = {
 };
 
 // #include "TestControl.h"
+File testbenchfile;
 
-// Pins used so far 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, A0, A1, A2, A3, A4, A5
-// Pins not used 0, 1, 13
+// Pins used so far 2, 4, 5, 6, 8, 9, 10, 11, 12, 13, A0, A1, A2, A3, A4, A5
+// Pins not used 0, 1, 3, 7
 
 //pin setup
 const int motor1pin1 = 3;
@@ -73,17 +72,21 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT,&Wire, OLED_RESET);
 RotaryEncoder selector(4,5,7);
 
 const int motor2pin1 = 4;
-const int motor2pin2 = 7; // ditto
+//const int motor2pin2 = 7; // ditto
 const int motor2speedpin = 5;
+L298N myMotor(motor1pin1, motor1pin2);
 
 const int loadcell_dt = 6;
 const int loadcell_sck = A0;
 
 const int sd_cs = 10;
+const int sd_sck = 13;
+const int sd_mosi = 11; //must be 11
+const int sd_miso = 12; //must be 12
 
-const int eStopPin = 12;
+//const int eStopPin = 3;
 
-// SoftwareSerial espSerial(8, A3); //(RX, TX) A voltage divider is needed for the A3 pin
+SoftwareSerial espSerial(8, A3); //(RX, TX) A voltage divider is needed for the A3 pin
 
 const int encoder1_dt = A2; // enable software interupts during loop
 const int encoder1_clk = A1;
@@ -115,19 +118,18 @@ void setup() {
   display.setTextSize(1);
 
   //Estop button
-  pinMode(eStopPin, INPUT_PULLUP);
+  //pinMode(eStopPin, INPUT_PULLUP);
 
   //Driver pins
-  // pinMode(motor1pin1, OUTPUT);
-  // pinMode(motor1pin2, OUTPUT);
-  // pinMode(motor2pin1, OUTPUT);
+  pinMode(motor1pin1, OUTPUT);
+  pinMode(motor1pin2, OUTPUT);
+  pinMode(motor2pin1, OUTPUT);
   // pinMode(motor2pin2, OUTPUT);
-  // pinMode(motor1speedpin, OUTPUT);
-  // pinMode(motor2speedpin, OUTPUT);
+  pinMode(motor1speedpin, OUTPUT);
+  pinMode(motor2speedpin, OUTPUT);
 
   //Load cell pins
-  pinMode(loadcell_dt, INPUT);
-  pinMode(loadcell_sck, OUTPUT);
+  scale.begin(loadcell_dt, loadcell_sck);
   digitalWrite(loadcell_sck, LOW); //start low
 
   //Encoders pins
@@ -181,29 +183,32 @@ void setup() {
 
 void loop() {
 
-  float spoolRadius = 0.02; //measure and find value (meters) TODO
+  delay(1000);
+  // testbenchfile = SD.open("testbench.txt", FILE_WRITE);
+  // if (testbenchfile) {
+  //   Serial.print("testbench.txt open...");
 
-  //ESP8266 stuff
-  // if (espSerial.available()) {
-  //   Serial.write(espSerial.read());  // Read from ESP8266 and send to Serial Monitor
-  // }
-  
-  // if (Serial.available()) {
-  //   espSerial.write(Serial.read());  // Send Serial Monitor input to ESP8266
-  // }
+    float spoolRadius = 0.151; //measure and find value (meters) - not accurate rn
 
-  //Estop
-  if (digitalRead(eStopPin) == LOW) {
-    Serial.println("EMERGENCY STOP ACTIVATED!");
-
-    //Stop motors
-    digitalWrite(motor1pin1, LOW);
-    digitalWrite(motor1pin2, LOW);
-    digitalWrite(motor2pin1, LOW);
-    digitalWrite(motor2pin2, LOW);
+    // //ESP8266 stuff
+    // if (espSerial.available()) {
+    //   Serial.write(espSerial.read());  // Read from ESP8266 and send to Serial Monitor
+    // }
     
-    analogWrite(motor1speedpin, 0);
-    analogWrite(motor2speedpin, 0);
+    // if (Serial.available()) {
+    //   espSerial.write(Serial.read());  // Send Serial Monitor input to ESP8266
+    // }
+
+    //Estop
+    // if (digitalRead(eStopPin) == LOW) {
+    //   Serial.println("EMERGENCY STOP ACTIVATED!");
+
+    //   //Stop motors
+    //   digitalWrite(motor1pin1, LOW);
+    //   digitalWrite(motor2pin1, LOW);
+      
+    //   analogWrite(motor1speedpin, 0);
+    //   analogWrite(motor2speedpin, 0);
 
     while (true) {
     if (digitalRead(eStopPin) == HIGH) {
@@ -211,12 +216,11 @@ void loop() {
       delay(1000);
       }
     }
-  }
+  
 
-  //Constants
-
-  int w_angularVelocity=200; // NOT THE ACTUAL NUMBER DO NOT DO 200!!!!
-  const float radius = 0.073; // in meters
+    //Constants
+    int w_angularVelocity = 3; // NOT THE ACTUAL NUMBER DO NOT DO 200!!!!
+    const float radius = 0.073; // in meters
 
   //Get slip value
   // Serial.println("Please input slip value: ");
@@ -231,25 +235,54 @@ void loop() {
   pwmValue = constrain(pwmValue, 0, 255); // Ensure within limits
 
 
-  Serial.println(pwmValue);
-  linear_motor.setSpeed(255);
-  linear_motor.run(L298N::FORWARD);
-  delay(3000);
-  linear_motor.setSpeed(255);
+    // //Move forward
+    // digitalWrite(motor1pin1,  HIGH);
+    // digitalWrite(motor2pin1, HIGH);
+    // delay(3000);
 
+    //record force and amperage
 
+    //Write in SD card, slip value, linear velocity, force (Load Cell), amperage (ammeter)
+    // testbenchfile.println("Slip value,Linear velocity,Force,Amperage");
+    // testbenchfile.print(slipValue);
+    // testbenchfile.print(",");
+    // testbenchfile.print(linearVelocity);
+    // testbenchfile.print(",");
+    // //testbenchfile.print(force);
+    // testbenchfile.print(",");
+    // //testbenchfile.print(amperage);
 
-  //Move forward
-  linear_motor.run(L298N::BACKWARD);
-  delay(3000);
-  // digitalWrite(motor1pin1,  HIGH);
-  // digitalWrite(motor1pin2, LOW);
-  // digitalWrite(motor2pin1, HIGH);
-  // digitalWrite(motor2pin2, LOW);
-  // delay(3000);
+    // close file
+    // testbenchfile.close();
+    // Serial.println("file closed.");
+  // }
+  // else {
+  //   Serial.println("error opening testbench.txt");
+  // }
 
-  //Write in SD card, slip value, linear velocity, force (Load Cell), amperage (ammeter)
 }
+
+/**
+ * @brief Writes parameter data to an opened csv file line.
+ * 
+ * @param myfile opened and initialized SD card file
+ * @param slipValue Slip value for test
+ * @param linearVelocity Linear Velocity of Test
+ * @param Force Force recorded from Load cell.
+ * @return true 
+ * @return false 
+ */
+bool recordData(File &myfile, float &slipValue, float &linearVelocity, float &Force){
+  //Write in SD card, slip value, linear velocity, force (Load Cell), amperage (ammeter)
+    myfile.println("Slip value,Linear velocity,Force,Amperage");
+    myfile.print(slipValue);
+    myfile.print(",");
+    myfile.print(linearVelocity);
+    myfile.print(",");
+    myfile.println(Force);
+}
+
+
 
 float Test_setup(){
   float slip_ratio = 0;
