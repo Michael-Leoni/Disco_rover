@@ -139,15 +139,15 @@ void setup() {
   // pinMode(ammeterPin, INPUT);
 
   //SD Card initializtion
-  Serial.print("Initializing SD card...");
-  if (!SD.begin(sd_cs)) {
-    Serial.println("SD card initialization failed");
-    // display.setCursor(0,0);
-    // display.println(F("SD err"));
-    // display.display();
-    while(true);
-  }
-  Serial.println("initialization done.");
+  // Serial.print("Initializing SD card...");
+  // if (!SD.begin(sd_cs)) {
+  //   Serial.println("SD card initialization failed");
+  //   // display.setCursor(0,0);
+  //   // display.println(F("SD err"));
+  //   // display.display();
+  //   while(true);
+  // }
+  // Serial.println("initialization done.");
 
   // testfile = SD.open("test.txt", FILE_WRITE);
   // if (testfile) {
@@ -186,7 +186,6 @@ void setup() {
 */
 
 void loop() {
-  Serial.println(scale.get_units(),1);
 
   // delay(1000);
   // testbenchfile = SD.open("testbench.txt", FILE_WRITE);
@@ -215,7 +214,6 @@ void loop() {
   // int pwmValue = map(wheelAngularVelocity, 0, w_angularVelocity, 0, 255);
   // pwmValue = constrain(pwmValue, 0, 255); // Ensure within limits
 
-  lc_reading = scale.get_units();
 }
 
 /**
@@ -252,6 +250,7 @@ float Test_setup(){
     }
     selector.ReadRotary();
     slip_ratio = selector.count%21*0.05;
+    Serial.println(slip_ratio);
     // Serial.println(selector.count);
     
   //Display the values the user is selecting
