@@ -205,6 +205,8 @@ void loop() {
   float slipValue=Test_setup();
   // float slipValue = 0.5;
   Serial.println(slipValue);
+
+
   
   float linearVelocity = (1-slipValue)*w_angularVelocity*radius;
   float wheelAngularVelocity = linearVelocity*spoolRadius; // not totally sure on this calculation have someone double check
@@ -215,8 +217,12 @@ void loop() {
 
   lc_reading = (float)round(scale.get_units());
 
-  recordData(testbenchfile,slipValue,linearVelocity,lc_reading);
-  delay(5000);
+  if(createAndOpen(testbenchfile)){
+    while(!selector.RotaryPressed()){
+      recordData(testbenchfile,slipValue,linearVelocity,lc_reading);
+      delay(1000);
+    }
+  }
   testbenchfile.close();
 
 }
