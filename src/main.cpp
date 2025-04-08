@@ -242,8 +242,6 @@ bool recordData(File &myfile, float &slipValue, float &linearVelocity, float &Fo
     Serial.println("writing to file");
 }
 
-
-
 float Test_setup(){
   float slip_ratio = 0;
   while(true){
