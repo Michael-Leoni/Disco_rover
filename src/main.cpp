@@ -164,13 +164,16 @@ void setup() {
   //Should create a new file.
   file_num=0;
   do{
-  sprintf(file_num_char,"%d",file_num);
-  strcat(filename,"test");
-  strcat(filename,file_num_char);
-  strcat(filename,".txt");
-  file_num++;
+    filename[0] = '\0';
+    sprintf(file_num_char,"%d",file_num);
+    strcat(filename,"test");
+    strcat(filename,file_num_char);
+    strcat(filename,".txt");
+    file_num++;
   //open file
   }while(SD.exists(filename));
+  Serial.print("Attempting to open ");
+  Serial.println(filename);
 
   testbenchfile = SD.open(filename,FILE_WRITE);
   if (testbenchfile) {
