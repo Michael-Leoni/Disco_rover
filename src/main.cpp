@@ -1,5 +1,6 @@
 //librarys - still need to import
 #include <SD.h>
+#include <SPI.h>
 #include "HX711.h"
 #include <L298N.h>
 
@@ -7,8 +8,6 @@
 #include "RotaryEncoder.h"
 #include <Wire.h>
 
-#include<Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
 #define OLED_RESET    -1
 #define SCREEN_ADDRESS 0x3C
 #define SENSOR_ADDRESS 0X38
@@ -58,10 +57,9 @@
 // 	Mines_Logo
 // };
 
-// #include "TestControl.h"
-// File testbenchfile;
+File testbenchfile;
 
-float Test_setup();
+// float Test_setup();
 bool recordData(File &myfile, float &slipValue, float &linearVelocity, float &Force);
 
 // Pins used so far 2, 4, 5, 6, 8, 9, 10, 11, 12, 13, A0, A1, A2, A3, A4, A5
@@ -72,7 +70,7 @@ const byte motor1pin1 = 3;
 const byte motor1pin2 = 2; // may get rid of and short in order to only drive in one direction
 const byte motor1speedpin = 9;
 L298N linear_motor(motor1speedpin,motor1pin1,motor1pin2);
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT,&Wire, OLED_RESET);
+// Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT,&Wire, OLED_RESET);
 RotaryEncoder selector(4,5,7);
 
 const byte motor2pin1 = 4;
@@ -107,17 +105,17 @@ void setup() {
   while (!Serial) {}
 
   //display initialization
-  if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
-    Serial.println("!init disp");
-    for(;;); // Don't proceed, loop forever
-  }
+  // if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+  //   Serial.println("!init disp");
+  //   for(;;); // Don't proceed, loop forever
+  // }
   selector.begin();
 
-  display.clearDisplay();
-  // display.drawBitmap(0,0,Mines_Logo,128,32,WHITE);
-  display.display();  //initialize display upon boot
-  display.setTextColor(WHITE);
-  display.setTextSize(1);
+  // display.clearDisplay();
+  // // display.drawBitmap(0,0,Mines_Logo,128,32,WHITE);
+  // display.display();  //initialize display upon boot
+  // display.setTextColor(WHITE);
+  // display.setTextSize(1);
 
   //Estop button
   //pinMode(eStopPin, INPUT_PULLUP);
@@ -137,12 +135,12 @@ void setup() {
   Serial.print("Initializing SD card...");
   if (!SD.begin(sd_cs)) {
     Serial.println("SD card initialization failed");
-    display.setCursor(0,0);
-    display.println(F("SD err"));
-    display.display();
+    // display.setCursor(0,0);
+    // display.println(F("SD err"));
+    // display.display();
     while(true);
   }
-  // Serial.println("initialization done.");
+  Serial.println("initialization done.");
 
   // testfile = SD.open("test.txt", FILE_WRITE);
   // if (testfile) {
@@ -158,17 +156,19 @@ void setup() {
   // }
 
   //open file
-  // testbenchfile = SD.open("testbench.txt", FILE_WRITE);
-  // if (testbenchfile) {
-  //   Serial.println("Reading from rest.tst:");
-  //   while (testbenchfile.available()) {
-  //     Serial.write(testbenchfile.read());
-  //   }
-  //   testbenchfile.close();
-  // }
-  // else {
-  //   Serial.println("error opening test.txt");
-  // }
+  Serial.println(SD.exists("test1.txt"));
+  testbenchfile = SD.open("/test1.txt",FILE_WRITE);
+  if (testbenchfile) {
+    Serial.println("Reading from testbench.txt:");
+    // while (testbenchfile.available()) {
+    //   Serial.write(testbenchfile.read());
+    // }
+    testbenchfile.close();
+  }
+  else {
+    Serial.println("error opening testbench.txt");
+    while(1);
+  }
 
   delay(1500);
 
@@ -206,7 +206,8 @@ void loop() {
   //Get slip value
   // Serial.println("Please input slip value: ");
   // int slipValue = getSerialInput();
-  float slipValue=Test_setup();
+  // float slipValue=Test_setup();
+  float slipValue = 0.5;
   Serial.println(slipValue);
   
   float linearVelocity = (1-slipValue)*w_angularVelocity*radius;
@@ -218,7 +219,7 @@ void loop() {
 
   lc_reading = (float)round(scale.get_units());
 
-  // recordData(testbenchfile,slipValue,linearVelocity,lc_reading);
+  recordData(testbenchfile,slipValue,linearVelocity,lc_reading);
 
 
 
@@ -250,25 +251,25 @@ float Test_setup(){
   float slip_ratio = 0;
   while(true){
     // Serial.println(selector.count);
-    display.clearDisplay();
-    display.setTextSize(1);
-    display.setTextColor(WHITE);
-    display.println(F("Slip:"));
+    // display.clearDisplay();
+    // display.setTextSize(1);
+    // display.setTextColor(WHITE);
+    // display.println(F("Slip:"));
 
     if(selector.RotaryPressed()){
       break;
     }
     selector.ReadRotary();
     slip_ratio = selector.count%21*0.05;
-    Serial.println(selector.count);
+    // Serial.println(selector.count);
     
   //Display the values the user is selecting
-    display.print(slip_ratio);
-    display.display();
-    display.setCursor(0,0);
+    // display.print(slip_ratio);
+    // display.display();
+    // display.setCursor(0,0);
   }
-  display.clearDisplay();
-  display.display();
+  // display.clearDisplay();
+  // display.display();
   slip_ratio = 0.5;
   return slip_ratio;
 }
