@@ -215,11 +215,7 @@ void loop() {
   // int pwmValue = map(wheelAngularVelocity, 0, w_angularVelocity, 0, 255);
   // pwmValue = constrain(pwmValue, 0, 255); // Ensure within limits
 
-
-  lc_reading = (float)round(scale.get_units());
-
-
-
+  lc_reading = scale.get_units();
 }
 
 /**
