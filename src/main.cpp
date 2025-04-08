@@ -217,13 +217,7 @@ void loop() {
 
   lc_reading = (float)round(scale.get_units());
 
-  if(createAndOpen(testbenchfile)){
-    while(!selector.RotaryPressed()){
-      recordData(testbenchfile,slipValue,linearVelocity,lc_reading);
-      delay(1000);
-    }
-  }
-  testbenchfile.close();
+
 
 }
 
