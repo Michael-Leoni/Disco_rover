@@ -59,7 +59,7 @@
 
 File testbenchfile;
 
-// float Test_setup();
+float Test_setup();
 bool recordData(File &myfile, float &slipValue, float &linearVelocity, float &Force);
 
 // Pins used so far 2, 4, 5, 6, 8, 9, 10, 11, 12, 13, A0, A1, A2, A3, A4, A5
@@ -163,7 +163,6 @@ void setup() {
     // while (testbenchfile.available()) {
     //   Serial.write(testbenchfile.read());
     // }
-    testbenchfile.close();
   }
   else {
     Serial.println("error opening testbench.txt");
@@ -206,8 +205,8 @@ void loop() {
   //Get slip value
   // Serial.println("Please input slip value: ");
   // int slipValue = getSerialInput();
-  // float slipValue=Test_setup();
-  float slipValue = 0.5;
+  float slipValue=Test_setup();
+  // float slipValue = 0.5;
   Serial.println(slipValue);
   
   float linearVelocity = (1-slipValue)*w_angularVelocity*radius;
@@ -220,7 +219,8 @@ void loop() {
   lc_reading = (float)round(scale.get_units());
 
   recordData(testbenchfile,slipValue,linearVelocity,lc_reading);
-
+  delay(5000);
+  testbenchfile.close();
 
 
 }
@@ -237,12 +237,13 @@ void loop() {
  */
 bool recordData(File &myfile, float &slipValue, float &linearVelocity, float &Force){
   //Write in SD card, slip value, linear velocity, force (Load Cell), amperage (ammeter)
-    myfile.println("Slip value,Linear velocity,Force,Amperage");
+    myfile.println("Slip value,Linear velocity,Force");
     myfile.print(slipValue);
     myfile.print(",");
     myfile.print(linearVelocity);
     myfile.print(",");
-    myfile.println(Force);
+    myfile.println(Force); 
+    Serial.println("writing to file");
 }
 
 
@@ -264,13 +265,12 @@ float Test_setup(){
     // Serial.println(selector.count);
     
   //Display the values the user is selecting
-    // display.print(slip_ratio);
     // display.display();
     // display.setCursor(0,0);
   }
   // display.clearDisplay();
   // display.display();
-  slip_ratio = 0.5;
+  // slip_ratio = 0.5;
   return slip_ratio;
 }
 
