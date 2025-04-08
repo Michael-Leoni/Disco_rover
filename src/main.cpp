@@ -4,7 +4,7 @@
 #include "HX711.h"
 #include <L298N.h>
 
-#define LC_CALIBRATION_FACTOR 10 // not actual value, just a placeholder for the time being.
+#define LC_CALIBRATION_FACTOR 9771.09643232 // not actual value, just a placeholder for the time being.
 #include "RotaryEncoder.h"
 #include <Wire.h>
 
@@ -186,8 +186,9 @@ void setup() {
 */
 
 void loop() {
+  Serial.println(scale.get_units(),1);
 
-  delay(1000);
+  // delay(1000);
   // testbenchfile = SD.open("testbench.txt", FILE_WRITE);
   // if (testbenchfile) {
   //   Serial.print("testbench.txt open...");
@@ -208,11 +209,11 @@ void loop() {
 
 
   
-  float linearVelocity = (1-slipValue)*w_angularVelocity*radius;
-  float wheelAngularVelocity = linearVelocity*spoolRadius; // not totally sure on this calculation have someone double check
+  // float linearVelocity = (1-slipValue)*w_angularVelocity*radius;
+  // float wheelAngularVelocity = linearVelocity*spoolRadius; // not totally sure on this calculation have someone double check
 
-  int pwmValue = map(wheelAngularVelocity, 0, w_angularVelocity, 0, 255);
-  pwmValue = constrain(pwmValue, 0, 255); // Ensure within limits
+  // int pwmValue = map(wheelAngularVelocity, 0, w_angularVelocity, 0, 255);
+  // pwmValue = constrain(pwmValue, 0, 255); // Ensure within limits
 
 
   lc_reading = (float)round(scale.get_units());
