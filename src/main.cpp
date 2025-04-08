@@ -85,6 +85,10 @@ const byte sd_cs = 10;
 const byte sd_sck = 13;
 const byte sd_mosi = 11; //must be 11
 const byte sd_miso = 12; //must be 12
+byte file_num;
+char file_num_char[3];
+char filename[13];
+
 
 // const byte eStopPin = 12;
 
@@ -98,6 +102,8 @@ HX711 scale;
 float lc_reading=0;
 
 void setup() {
+
+  filename[0] = '\0';
   // put your setup code here, to run once:
   Serial.begin(9600);
   // espSerial.begin(9600); //if seeing gibberish change 9600 to 115200
@@ -155,11 +161,21 @@ void setup() {
   //   Serial.println("error opening test.txt");
   // }
 
+  //Should create a new file.
+  file_num=0;
+  do{
+  sprintf(file_num_char,"%d",file_num);
+  strcat(filename,"test");
+  strcat(filename,file_num_char);
+  strcat(filename,".txt");
+  file_num++;
   //open file
-  Serial.println(SD.exists("test1.txt"));
-  testbenchfile = SD.open("/test1.txt",FILE_WRITE);
+  }while(SD.exists(filename));
+
+  testbenchfile = SD.open(filename,FILE_WRITE);
   if (testbenchfile) {
-    Serial.println("Reading from testbench.txt:");
+    Serial.print("Opening: ");
+    Serial.print(filename);
     // while (testbenchfile.available()) {
     //   Serial.write(testbenchfile.read());
     // }
@@ -177,6 +193,7 @@ void setup() {
   scale.set_scale(LC_CALIBRATION_FACTOR);
   scale.tare();
 
+  
   //All readings using the load cell going forward should just call scale.get_units()
 }
 
@@ -221,7 +238,6 @@ void loop() {
   recordData(testbenchfile,slipValue,linearVelocity,lc_reading);
   delay(5000);
   testbenchfile.close();
-
 
 }
 
