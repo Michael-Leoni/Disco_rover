@@ -92,9 +92,7 @@ const int encoder1_dt = A2; // enable software interupts during loop
 const int encoder1_clk = A1;
 const int encoder2_dt = A0;
 const int encoder2_clk = A4;
-const int ammeterPin = 11;
 
-File testfile;
 
 float Test_setup();
 
@@ -165,18 +163,18 @@ void setup() {
   //   Serial.println("error opening test.txt");
   // }
 
-  //open file for reading
-  // testfile = SD.open("test.txt");
-  // if (testfile) {
-  //   Serial.println("Reading from rest.tst:");
-  //   while (testfile.available()) {
-  //     Serial.write(testfile.read());
-  //   }
-  //   testfile.close();
-  // }
-  // else {
-  //   Serial.println("error opening test.txt");
-  // }
+  //open file
+  testbenchfile = SD.open("testbench.txt", FILE_WRITE);
+  if (testbenchfile) {
+    Serial.println("Reading from rest.tst:");
+    while (testbenchfile.available()) {
+      Serial.write(testbenchfile.read());
+    }
+    testbenchfile.close();
+  }
+  else {
+    Serial.println("error opening test.txt");
+  }
 
   delay(1500);
 }
@@ -189,28 +187,6 @@ void loop() {
   //   Serial.print("testbench.txt open...");
 
     float spoolRadius = 0.151; //measure and find value (meters) - not accurate rn
-
-    // //ESP8266 stuff
-    // if (espSerial.available()) {
-    //   Serial.write(espSerial.read());  // Read from ESP8266 and send to Serial Monitor
-    // }
-    
-    // if (Serial.available()) {
-    //   espSerial.write(Serial.read());  // Send Serial Monitor input to ESP8266
-    // }
-
-    //Estop
-    // if (digitalRead(eStopPin) == LOW) {
-    //   Serial.println("EMERGENCY STOP ACTIVATED!");
-
-    //   //Stop motors
-    //   digitalWrite(motor1pin1, LOW);
-    //   digitalWrite(motor2pin1, LOW);
-      
-    //   analogWrite(motor1speedpin, 0);
-    //   analogWrite(motor2speedpin, 0);
-
-
   
 
     //Constants
@@ -229,31 +205,9 @@ void loop() {
   int pwmValue = map(wheelAngularVelocity, 0, w_angularVelocity, 0, 255);
   pwmValue = constrain(pwmValue, 0, 255); // Ensure within limits
 
-
-    // //Move forward
-    // digitalWrite(motor1pin1,  HIGH);
-    // digitalWrite(motor2pin1, HIGH);
-    // delay(3000);
+  recordData(testbenchfile,slipValue,linearVelocity,)
 
     //record force and amperage
-
-    //Write in SD card, slip value, linear velocity, force (Load Cell), amperage (ammeter)
-    // testbenchfile.println("Slip value,Linear velocity,Force,Amperage");
-    // testbenchfile.print(slipValue);
-    // testbenchfile.print(",");
-    // testbenchfile.print(linearVelocity);
-    // testbenchfile.print(",");
-    // //testbenchfile.print(force);
-    // testbenchfile.print(",");
-    // //testbenchfile.print(amperage);
-
-    // close file
-    // testbenchfile.close();
-    // Serial.println("file closed.");
-  // }
-  // else {
-  //   Serial.println("error opening testbench.txt");
-  // }
 
 }
 
