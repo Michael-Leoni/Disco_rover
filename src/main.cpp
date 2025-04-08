@@ -98,7 +98,7 @@ const int encoder2_clk = A4;
 
 HX711 scale;
 
-int lc_reading=0;
+float lc_reading=0;
 
 void setup() {
   // put your setup code here, to run once:
@@ -225,7 +225,10 @@ void loop() {
   int pwmValue = map(wheelAngularVelocity, 0, w_angularVelocity, 0, 255);
   pwmValue = constrain(pwmValue, 0, 255); // Ensure within limits
 
-  recordData(testbenchfile,slipValue,linearVelocity,)
+
+  lc_reading = (float)round(scale.get_units());
+
+  recordData(testbenchfile,slipValue,linearVelocity,lc_reading);
 
     //record force and amperage
 
@@ -276,8 +279,6 @@ float Test_setup(){
   display.clearDisplay();
   display.display();
   return slip_ratio;
-
-  lc_reading = round(scale.get_units());
 }
 
 void LC_calibration_test(){
