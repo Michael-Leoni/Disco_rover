@@ -239,7 +239,6 @@ void loop() {
  */
 bool recordData(File &myfile, float &slipValue, float &linearVelocity, float &Force){
   //Write in SD card, slip value, linear velocity, force (Load Cell), amperage (ammeter)
-    myfile.println("Slip value,Linear velocity,Force");
     myfile.print(slipValue);
     myfile.print(",");
     myfile.print(linearVelocity);
@@ -318,6 +317,7 @@ bool createAndOpen(File &newfile){
     Serial.println("error opening testbench.txt");
     return false;
   }
+  newfile.println("Slip value,Linear velocity,Force");
 
 }
 
