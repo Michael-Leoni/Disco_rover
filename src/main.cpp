@@ -61,6 +61,7 @@ File testbenchfile;
 
 float Test_setup();
 bool recordData(File &myfile, float &slipValue, float &linearVelocity, float &Force);
+bool createAndOpen(File &newfile);
 
 // Pins used so far 2, 4, 5, 6, 8, 9, 10, 11, 12, 13, A0, A1, A2, A3, A4, A5
 // Pins not used 0, 1, 3, 7
@@ -163,31 +164,7 @@ void setup() {
 
   //Should create a new file.
   file_num=0;
-  do{
-    filename[0] = '\0';
-    sprintf(file_num_char,"%d",file_num);
-    strcat(filename,"test");
-    strcat(filename,file_num_char);
-    strcat(filename,".txt");
-    file_num++;
-  //open file
-  }while(SD.exists(filename));
-  Serial.print("Attempting to open ");
-  Serial.println(filename);
-
-  testbenchfile = SD.open(filename,FILE_WRITE);
-  if (testbenchfile) {
-    Serial.print("Opening: ");
-    Serial.print(filename);
-    // while (testbenchfile.available()) {
-    //   Serial.write(testbenchfile.read());
-    // }
-  }
-  else {
-    Serial.println("error opening testbench.txt");
-    while(1);
-  }
-
+  
   delay(1500);
 
 
@@ -306,6 +283,38 @@ void LC_calibration_test(){
     Serial.print(F("result: "));
     Serial.println(reading);
   }
+}
+
+/**
+ * @brief Create a And Open a file on the SD card with a new file number. Opens to file object passed as parameter.
+ * 
+ * @return true 
+ * @return false 
+ */
+bool createAndOpen(File &newfile){
+  do{
+    filename[0] = '\0';
+    sprintf(file_num_char,"%d",file_num);
+    strcat(filename,"test");
+    strcat(filename,file_num_char);
+    strcat(filename,".txt");
+    file_num++;
+  //open file
+  }while(SD.exists(filename));
+  Serial.print("Attempting to open ");
+  Serial.println(filename);
+
+  newfile = SD.open(filename,FILE_WRITE);
+  if (newfile) {
+    Serial.print("Opening: ");
+    Serial.print(filename);
+    return true;
+  }
+  else {
+    Serial.println("error opening testbench.txt");
+    return false;
+  }
+
 }
 
 
