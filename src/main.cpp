@@ -129,8 +129,8 @@ void setup() {
   pinMode(motor2speedpin, OUTPUT);
 
   //Load cell pins
-  scale.begin(loadcell_dt, loadcell_sck);
-  digitalWrite(loadcell_sck, LOW); //start low
+  // scale.begin(loadcell_dt, loadcell_sck);
+  // digitalWrite(loadcell_sck, LOW); //start low
 
   //Encoders pins
   pinMode(encoder1_dt, INPUT);
@@ -210,12 +210,7 @@ void loop() {
     //   analogWrite(motor1speedpin, 0);
     //   analogWrite(motor2speedpin, 0);
 
-    while (true) {
-    if (digitalRead(eStopPin) == HIGH) {
-      Serial.println(F("E-Stop Released. Restart required."));
-      delay(1000);
-      }
-    }
+
   
 
     //Constants
