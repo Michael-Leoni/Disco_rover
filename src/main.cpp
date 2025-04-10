@@ -81,10 +81,8 @@ void setup() {
 
   //Motor setup and pins
   motorControlSetup(LinearMotor,A0,9,2,A1,47,2);
-  motorControlSetup(WheelMotor,A0,5,3,A2,47,2);
+  motorControlSetup(WheelMotor,1,5,3,A2,47,2);
 
-
-  
   delay(1500);
 
 
