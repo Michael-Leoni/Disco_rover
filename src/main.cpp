@@ -137,6 +137,8 @@ void loop() {
 
     //Close file
     testFile.close();
+    LinearMotor.setSpeed(0);
+    WheelMotor.setSpeed(0);
     test_started = false;
   }
 }
