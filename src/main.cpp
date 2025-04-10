@@ -1,183 +1,280 @@
-#include <Arduino.h>
-
 //librarys - still need to import
-// #include <SoftwareSerial.h>
 #include <SD.h>
 #include <SPI.h>
-#include <L298N.h>
+#include "HX711.h"
+#include <Encoder.h>
+#include "SpeedControl.h"
 
-// Pins used so far 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, A0, A1, A2, A3, A4, A5
-// Pins not used 0, 1, 13
+#define LC_CALIBRATION_FACTOR 9771.09643232 // not actual value, just a placeholder for the time being.
+#define CPR 2821
+#define GEAR_RATIO 10
+// #include "RotaryEncoder.h"
+#include <Wire.h>
+
+
+
+// Pins used so far 2, 4, 5, 6, 8, 9, 10, 11, 12, 13, A0, A1, A2, A3, A4, A5
+// Pins not used 0, 1, 3, 7
 
 //pin setup
-const int motor1pin1 = 2;
-const int motor1pin2 = 3; // may get rid of and short in order to only drive in one direction
-const int motor1speedpin = 9;
-L298N linear_motor(motor1speedpin,motor1pin1,motor1pin2);
+
+const float ZN_coeff[3] = {0.33,0.66,0.11};
+
+//DIMENSIONS
+const float wheel_diameter = 0.13; //Meters
+const float belt_spool_diameter = 1.22; //CM //I DO NOT THINK THIS IS CORRECT
+const float test_distance = 12*2.54; //CM //This will likely need to be shorter.
+
+SpeedControl LinearMotor;
+SpeedControl WheelMotor;
+
+const byte loadcell_dt = 6;
+const byte loadcell_sck = 8;
 
 
-const int motor2pin1 = 4;
-const int motor2pin2 = 7; // ditto
-const int motor2speedpin = 5;
+//SD CARD
+const byte sd_cs = 10;
 
-const int loadcell_dt = 6;
-const int loadcell_sck = A5;
+byte file_num=0;
+char file_num_char[3];
+char filename[13];
 
-const int sd_cs = 10;
+File testFile;
 
-const int eStopPin = 12;
+//TEST PARAMETERS
+const float w_anglarVelocity = 3;
 
-// SoftwareSerial espSerial(8, A3); //(RX, TX) A voltage divider is needed for the A3 pin
+const byte start_button = 7;
 
-const int encoder1_dt = A2; // enable software interupts during loop
-const int encoder1_clk = A1;
-const int encoder2_dt = A0;
-const int encoder2_clk = A4;
+// const byte eStopPin = 12;
 
-const int ammeterPin = 11;
+//FUNCTION DECLARATIONS
+float Test_setup();
+void motorControlSetup(SpeedControl& controller, const uint8_t pin_dir, const uint8_t pwm_pin, const uint8_t encA_pin, const uint8_t encB_pin, const float KU, const float TU);
+bool createAndOpen(File &newfile);
+bool recordData(File &myfile, float &slipValue, float &linearVelocity, float &Force);
+bool buttonDebounceCheck(uint8_t);
 
-File testfile;
+HX711 scale;
+
+float lc_reading=0;
 
 void setup() {
+  pinMode(7,INPUT_PULLUP);
+  filename[0] = '\0';
   // put your setup code here, to run once:
-
   Serial.begin(9600);
   // espSerial.begin(9600); //if seeing gibberish change 9600 to 115200
-  while (!Serial) {
-  }
+  Serial.println("Initializing");
 
-  //Estop button
-  pinMode(eStopPin, INPUT_PULLUP);
 
-  //Driver pins
-  // pinMode(motor1pin1, OUTPUT);
-  // pinMode(motor1pin2, OUTPUT);
-  // pinMode(motor2pin1, OUTPUT);
-  // pinMode(motor2pin2, OUTPUT);
-  // pinMode(motor1speedpin, OUTPUT);
-  // pinMode(motor2speedpin, OUTPUT);
+  //Motor setup and pins
+  motorControlSetup(LinearMotor,A0,9,2,A1,47,2);
+  motorControlSetup(WheelMotor,1,5,3,A2,47,2);
 
-  //Load cell pins
-  pinMode(loadcell_dt, INPUT);
-  pinMode(loadcell_sck, OUTPUT);
-  digitalWrite(loadcell_sck, LOW); //start low
 
-  //Encoders pins
-  pinMode(encoder1_dt, INPUT);
-  pinMode(encoder1_clk, INPUT);
-  pinMode(encoder2_dt, INPUT);
-  pinMode(encoder2_clk, INPUT);
 
-  //Ammeter pins
-  // pinMode(ammeterPin, INPUT);
 
-  //SD Card Test
-  Serial.print("Initializing SD card...");
-  if (!SD.begin(sd_cs)) {
-    Serial.println("SD card initialization failed");
-    // while (1);
-  }
-  Serial.println("initialization done.");
+//Loadcell setup.
+  scale.begin(loadcell_dt, loadcell_sck);// TODO look into using the same sck for the SD card.
+  scale.set_scale(LC_CALIBRATION_FACTOR);
+  scale.tare();
 
-  testfile = SD.open("test.txt", FILE_WRITE);
-  if (testfile) {
-    Serial.print("Writing to test.txt...");
-    // test print in file
-    testfile.println("testing 1, 2, 3.");
-    // close file
-    testfile.close();
-    Serial.println("file closed.");
-  }
-  else {
-    Serial.println("error opening test.txt");
-  }
+//SD Setup
+if (!SD.begin(sd_cs)) {
+  Serial.println(F("initialization failed!"));
+  while (1);
+}
+Serial.println(F("initialization done."));
+  
+}
 
-  //open file for reading
-  testfile = SD.open("test.txt");
-  if (testfile) {
-    Serial.println("Reading from rest.tst:");
-    while (testfile.available()) {
-      Serial.write(testfile.read());
-    }
-    testfile.close();
-  }
-  else {
-    Serial.println("error opening test.txt");
+/*
+#
+#
+#                     LOOP DE LOOPS
+#
+#
+*/
+
+bool test_started = false;
+float slipValue = 0.0;
+void loop() {
+
+unsigned long previous_time=0;
+  if (buttonDebounceCheck(start_button)&&slipValue<=1.0){
+    //Initialize the file
+    createAndOpen(testFile);
+
+    //Get slip value
+    slipValue+=0.1;
+    // Serial.println("Please input slip value: ");
+    // int slipValue = getSerialInput();
+
+    float linear_velocity = ((1-slipValue)*w_anglarVelocity*wheel_diameter); //m/s
+    
+    LinearMotor.setSpeed(linear_velocity*100/(belt_spool_diameter*M_PI));
+    WheelMotor.setSpeed(w_anglarVelocity*GEAR_RATIO);
+    // LinearMotor.setSpeed(0);
+    // WheelMotor.setSpeed(0);
+
+    //Actual test running.
+    linear_velocity = 0;
+    float actual_slip=0;
+
+    delay(5000); //Time for us to clear out.
+    /*
+    * Maybe add some indicator light or some flashing LED to show that the test is starting.
+    */
+    previous_time = millis();
+    do{
+      LinearMotor.controlLoop();
+      WheelMotor.controlLoop();
+      // LinearMotor.stop();
+      // WheelMotor.stop();
+      //Calculate actual slip
+      linear_velocity = LinearMotor.currentVelocity*(belt_spool_diameter*M_PI);
+      actual_slip = 1-linear_velocity/(w_anglarVelocity*wheel_diameter*M_PI);
+      //Record data
+      lc_reading = scale.get_units();
+      Serial.println("Prepping to record");
+      if(recordData(testFile,actual_slip,linear_velocity,lc_reading)){
+        Serial.println(F("Filewrite successful"));
+      }
+      Serial.println(LinearMotor.currentPosition);
+      Serial.println((LinearMotor.currentPosition/CPR));
+      // Serial.println((LinearMotor.currentPosition/CPR)*belt_spool_diameter);
+    // The termination of this loop needs to be tested still.
+    }while((LinearMotor.currentPosition/CPR)*belt_spool_diameter*M_PI<test_distance);//converts current position counts to revolutions, calculates distance based off that and compares
+    LinearMotor.setSpeed(0);
+    WheelMotor.setSpeed(0);
+    LinearMotor.controlLoop();
+    WheelMotor.controlLoop();
+    //Close file
+    testFile.close();
+    LinearMotor.stop();
+    WheelMotor.stop();
+    LinearMotor.reset();
+    WheelMotor.reset();
+    test_started = false;
   }
 }
 
-void loop() {
+/**
+ * @brief Writes parameter data to an opened csv file line.
+ * 
+ * @param myfile opened and initialized SD card file
+ * @param slipValue Slip value for test
+ * @param linearVelocity Linear Velocity of Test
+ * @param Force Force recorded from Load cell.
+ * @return true 
+ * @return false 
+ */
+bool recordData(File &myfile, float &slipValue, float &linearVelocity, float &Force){
+  //Write in SD card, slip value, linear velocity, force (Load Cell), amperage (ammeter)
+    myfile.print(slipValue);
+    myfile.print(",");
+    myfile.print(linearVelocity);
+    myfile.print(",");
+    myfile.println(Force); 
+    Serial.println("writing to file");
+}
 
-  float spoolRadius = 0.02; //measure and find value (meters) TODO
+float Test_setup(){
+  float slip_ratio = 0;
+  while(true){
+    // Serial.println(selector.count);
+    // display.clearDisplay();
+    // display.setTextSize(1);
+    // display.setTextColor(WHITE);
+    // display.println(F("Slip:"));
 
-  //ESP8266 stuff
-  // if (espSerial.available()) {
-  //   Serial.write(espSerial.read());  // Read from ESP8266 and send to Serial Monitor
-  // }
-  
-  // if (Serial.available()) {
-  //   espSerial.write(Serial.read());  // Send Serial Monitor input to ESP8266
-  // }
-
-  //Estop
-  if (digitalRead(eStopPin) == LOW) {
-    Serial.println("EMERGENCY STOP ACTIVATED!");
-
-    //Stop motors
-    digitalWrite(motor1pin1, LOW);
-    digitalWrite(motor1pin2, LOW);
-    digitalWrite(motor2pin1, LOW);
-    digitalWrite(motor2pin2, LOW);
+    // if(selector.RotaryPressed()){
+    //   break;
+    // }
+    // selector.ReadRotary();
+    // slip_ratio = selector.count%21*0.05;
+    // Serial.println(selector.count);
     
-    analogWrite(motor1speedpin, 0);
-    analogWrite(motor2speedpin, 0);
+  //Display the values the user is selecting
+    // display.display();
+    // display.setCursor(0,0);
+  }
+  // display.clearDisplay();
+  // display.display();
+  // slip_ratio = 0.5;
+  return slip_ratio;
+}
+void motorControlSetup(SpeedControl& controller, const uint8_t pin_dir, const uint8_t pwm_pin, const uint8_t encA_pin, const uint8_t encB_pin, const float KU, const float TU){
+  controller.setPin(pin_dir,pwm_pin,encA_pin,encB_pin);//test pins
+  controller.setReversePolarity(false);
+  controller.setCPR(CPR);
+  controller.setMotorMaxSpeed(4.183); //Hz
+  controller.setPIDValue(KU*ZN_coeff[0],KU*ZN_coeff[1]/TU,KU*TU*ZN_coeff[2]);
+}
 
-    while (true) {
-    if (digitalRead(eStopPin) == HIGH) {
-      Serial.println("E-Stop Released. Restart required.");
-      delay(1000);
-      }
-    }
+void LC_calibration_test(){
+  if(scale.is_ready()){
+    scale.set_scale();
+    Serial.println(F("Remove weight from load cell. Calibration will be complete in 5 seconds..."));
+    delay(5000);
+    scale.tare();
+    Serial.println(F("calibration complete."));
+    Serial.println(F("Place weight on scale"));
+    delay(2000);
+    long reading = scale.get_units(10);
+    Serial.print(F("result: "));
+    Serial.println(reading);
+  }
+}
+
+/**
+ * @brief Create a And Open a file on the SD card with a new file number. Opens to file object passed as parameter.
+ * 
+ * @return true 
+ * @return false 
+ */
+bool createAndOpen(File &newfile){
+  do{
+    filename[0] = '\0';
+    sprintf(file_num_char,"%d",file_num);
+    strcat(filename,"test");
+    strcat(filename,file_num_char);
+    strcat(filename,".txt");
+    file_num++;
+  //open file
+  }while(SD.exists(filename));
+  Serial.print("Attempting to open ");
+  Serial.println(filename);
+
+  newfile = SD.open(filename,FILE_WRITE);
+  if (newfile) {
+    Serial.print("Opening: ");
+    Serial.print(filename);
+    newfile.println("Slip value,Linear velocity,Force");
+    return true;
+  }
+  else {
+    Serial.println("error opening testbench.txt");
+    return false;
   }
 
-  //Constants
-
-  int w_angularVelocity=200; // NOT THE ACTUAL NUMBER DO NOT DO 200!!!!
-  const float radius = 0.073; // in meters
-
-  //Get slip value
-  // Serial.println("Please input slip value: ");
-  // int slipValue = getSerialInput();
-  int slipValue=5;
-  
-  float linearVelocity = (1-slipValue)*w_angularVelocity*radius;
-  float wheelAngularVelocity = linearVelocity*spoolRadius; // not totally sure on this calculation have someone double check
-
-  int pwmValue = map(wheelAngularVelocity, 0, w_angularVelocity, 0, 255);
-  pwmValue = constrain(pwmValue, 0, 255); // Ensure within limits
-
-  //Set motor speed
-  // analogWrite(motor1speedpin, pwmValue);
-  // analogWrite(motor2speedpin, pwmValue);
-
-  Serial.println(pwmValue);
-  linear_motor.setSpeed(255);
-  linear_motor.run(L298N::FORWARD);
-  delay(3000);
-  linear_motor.setSpeed(255);
-
-
-
-  //Move forward
-  linear_motor.run(L298N::BACKWARD);
-  delay(3000);
-  // digitalWrite(motor1pin1,  HIGH);
-  // digitalWrite(motor1pin2, LOW);
-  // digitalWrite(motor2pin1, HIGH);
-  // digitalWrite(motor2pin2, LOW);
-  // delay(3000);
-
-  //Write in SD card, slip value, linear velocity, force (Load Cell), amperage (ammeter)
-
-
+}
+//only works for one pin b/c of globals but I'm tired.
+unsigned long last_debounce_time = 0;
+unsigned long debounceDelay = 50;
+bool last_reading = 0;
+bool buttonDebounceCheck(const uint8_t pin){
+  bool button_state;
+  bool reading = !digitalRead(pin);
+  if(reading != last_reading){
+    last_debounce_time = millis();
+  }
+  if(millis() - last_debounce_time >debounceDelay){
+    if(button_state!=reading){
+      button_state = reading;
+    }
+  }
+  last_reading = reading;
+  return button_state;
 }
