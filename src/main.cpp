@@ -16,34 +16,23 @@
 // Pins not used 0, 1, 3, 7
 
 //pin setup
-const byte motor1pin1 = 3;
-const byte motor1pin2 = 2; // may get rid of and short in order to only drive in one direction
-const byte motor1speedpin = 9;
-// Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT,&Wire, OLED_RESET);
-// RotaryEncoder selector(4,5,7);
 
-const byte motor2pin1 = 4;
-//const byte motor2pin2 = 7; // ditto
-const byte motor2speedpin = 5;
 const float ZN_coeff[3] = {0.33,0.66,0.11};
 
 //DIMENSIONS
 const float wheel_diameter = 0.13; //Meters
-const float belt_spool_diameter = 0.006; //M //I DO NOT THINK THIS IS CORRECT
-const float test_distance = 2*12*2.54; //CM //This will likely need to be shorter.
+const float belt_spool_diameter = 16/1000; //M //I DO NOT THINK THIS IS CORRECT
+const float test_distance = 0.5*12*2.54; //CM //This will likely need to be shorter.
 
 SpeedControl LinearMotor;
 SpeedControl WheelMotor;
 
 const byte loadcell_dt = 6;
-const byte loadcell_sck = A0;
+const byte loadcell_sck = 8;
 
 
 //SD CARD
 const byte sd_cs = 10;
-const byte sd_sck = 13;
-const byte sd_mosi = 11; //must be 11
-const byte sd_miso = 12; //must be 12
 
 byte file_num=0;
 char file_num_char[3];
@@ -75,8 +64,7 @@ void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
   // espSerial.begin(9600); //if seeing gibberish change 9600 to 115200
-
-  while (!Serial) {}
+  Serial.println("Initializing");
 
 
   //Motor setup and pins
@@ -112,6 +100,7 @@ bool test_started = false;
 float slipValue = 0;
 void loop() {
 
+unsigned long previous_time=0;
   if (buttonDebounceCheck(start_button)&&slipValue<=1.0){
     //Initialize the file
     createAndOpen(testFile);
@@ -123,16 +112,19 @@ void loop() {
     float linear_velocity = ((1-slipValue)*w_anglarVelocity*wheel_diameter); //m/s
     
     LinearMotor.setSpeed(linear_velocity/belt_spool_diameter);
-    WheelMotor.setSpeed(w_anglarVelocity);
+    // WheelMotor.setSpeed(w_anglarVelocity);
+    WheelMotor.setSpeed(1);
+    Serial.println(linear_velocity);
 
     //Actual test running.
     linear_velocity = 0;
     float actual_slip=0;
 
-    delay(20000); //Time for us to clear out.
+    delay(5000); //Time for us to clear out.
     /*
     * Maybe add some indicator light or some flashing LED to show that the test is starting.
     */
+    previous_time = millis();
     do{
       LinearMotor.controlLoop();
       WheelMotor.controlLoop();
@@ -141,12 +133,19 @@ void loop() {
       actual_slip = 1-linear_velocity/(w_anglarVelocity*wheel_diameter);
       //Record data
       lc_reading = scale.get_units();
+      Serial.println("Prepping to record");
       if(recordData(testFile,actual_slip,linear_velocity,lc_reading)){
         Serial.println(F("Filewrite successful"));
       }
+      Serial.println(LinearMotor.currentPosition);
+      // Serial.println((LinearMotor.currentPosition/CPR)*belt_spool_diameter);
     // The termination of this loop needs to be tested still.
-    }while((LinearMotor.currentPosition/CPR)*belt_spool_diameter>(test_distance/100));//converts current position counts to revolutions, calculates distance based off that and compares
-
+    }while(millis()< 1000 + previous_time);
+    // while((LinearMotor.currentPosition/CPR)*belt_spool_diameter>(test_distance/100));//converts current position counts to revolutions, calculates distance based off that and compares
+    LinearMotor.setSpeed(0);
+    WheelMotor.setSpeed(0);
+    LinearMotor.controlLoop();
+    WheelMotor.controlLoop();
     //Close file
     testFile.close();
     LinearMotor.setSpeed(0);
