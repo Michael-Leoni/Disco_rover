@@ -6,7 +6,8 @@
 #include "SpeedControl.h"
 
 #define LC_CALIBRATION_FACTOR 9771.09643232 // not actual value, just a placeholder for the time being.
-#include "RotaryEncoder.h"
+#define CPR 2821
+// #include "RotaryEncoder.h"
 #include <Wire.h>
 
 
@@ -19,33 +20,47 @@ const byte motor1pin1 = 3;
 const byte motor1pin2 = 2; // may get rid of and short in order to only drive in one direction
 const byte motor1speedpin = 9;
 // Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT,&Wire, OLED_RESET);
-RotaryEncoder selector(4,5,7);
+// RotaryEncoder selector(4,5,7);
 
 const byte motor2pin1 = 4;
 //const byte motor2pin2 = 7; // ditto
 const byte motor2speedpin = 5;
 const float ZN_coeff[3] = {0.33,0.66,0.11};
 
+//DIMENSIONS
+const float wheel_diameter = 0.13; //Meters
+const float belt_spool_diameter = 0.006; //M //I DO NOT THINK THIS IS CORRECT
+const float test_distance = 2*12*2.54; //CM //This will likely need to be shorter.
+
 SpeedControl LinearMotor;
+SpeedControl WheelMotor;
 
 const byte loadcell_dt = 6;
 const byte loadcell_sck = A0;
 
+
+//SD CARD
 const byte sd_cs = 10;
 const byte sd_sck = 13;
 const byte sd_mosi = 11; //must be 11
 const byte sd_miso = 12; //must be 12
-byte file_num;
+
+byte file_num=0;
 char file_num_char[3];
 char filename[13];
 
+File testFile;
+
+//TEST PARAMETERS
+const float w_anglarVelocity = 3;
 
 // const byte eStopPin = 12;
 
+//FUNCTION DECLARATIONS
 float Test_setup();
 void motorControlSetup(SpeedControl& controller, const uint8_t pin_dir, const uint8_t pwm_pin, const uint8_t encA_pin, const uint8_t encB_pin, const float KU, const float TU);
-
-
+bool createAndOpen(File &newfile);
+bool recordData(File &myfile, float &slipValue, float &linearVelocity, float &Force);
 
 HX711 scale;
 
@@ -60,110 +75,71 @@ void setup() {
 
   while (!Serial) {}
 
-  //display initialization
-  // if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
-  //   Serial.println("!init disp");
-  //   for(;;); // Don't proceed, loop forever
-  // }
-  selector.begin();
 
-  // display.clearDisplay();
-  // // display.drawBitmap(0,0,Mines_Logo,128,32,WHITE);
-  // display.display();  //initialize display upon boot
-  // display.setTextColor(WHITE);
-  // display.setTextSize(1);
+  //Motor setup and pins
+  motorControlSetup(LinearMotor,A0,9,2,A1,47,2);
+  motorControlSetup(WheelMotor,A0,5,3,A2,47,2);
 
-  //Estop button
-
-  //Driver pins
-
-
-  //Load cell pins
-  // scale.begin(loadcell_dt, loadcell_sck);
-  // digitalWrite(loadcell_sck, LOW); //start low
-
-
-  //Ammeter pins
-  // pinMode(ammeterPin, INPUT);
-
-  //SD Card initializtion
-  Serial.print("Initializing SD card...");
-  if (!SD.begin(sd_cs)) {
-    Serial.println("SD card initialization failed");
-    // display.setCursor(0,0);
-    // display.println(F("SD err"));
-    // display.display();
-    while(true);
-  }
-  Serial.println("initialization done.");
-
-  // testfile = SD.open("test.txt", FILE_WRITE);
-  // if (testfile) {
-  //   Serial.print("Writing to test.txt...");
-  //   // test print in file
-  //   testfile.println("testing 1, 2, 3.");
-  //   // close file
-  //   testfile.close();
-  //   Serial.println("file closed.");
-  // }
-  // else {
-  //   Serial.println("error opening test.txt");
-  // }
 
   //Should create a new file.
-  file_num=0;
   
   delay(1500);
 
 
-//Basic Loadcell setup
+//Loadcell setup.
   scale.begin(loadcell_dt, loadcell_sck);// TODO look into using the same sck for the SD card.
   scale.set_scale(LC_CALIBRATION_FACTOR);
   scale.tare();
 
   
-  //All readings using the load cell going forward should just call scale.get_units()
 }
 
 /*
 #
 #
-#
+#                     LOOP DE LOOPS
 #
 #
 */
 
+bool test_started = false;
 void loop() {
-  Serial.println(scale.get_units(),1);
 
-  // delay(1000);
-  // testbenchfile = SD.open("testbench.txt", FILE_WRITE);
-  // if (testbenchfile) {
-  //   Serial.print("testbench.txt open...");
+  if (test_started){
+    //Initialize the file
+    createAndOpen(testFile);
+    //Get slip value
+    // Serial.println("Please input slip value: ");
+    // int slipValue = getSerialInput();
+    float slipValue=Test_setup();
+    Serial.println(slipValue);
+    
+    float linear_velocity = ((1-slipValue)*w_anglarVelocity*wheel_diameter); //m/s
+    
+    LinearMotor.setSpeed(linear_velocity/belt_spool_diameter);
+    WheelMotor.setSpeed(w_anglarVelocity);
 
-    float spoolRadius = 0.151; //measure and find value (meters) - not accurate rn
-  
+    //Actual test running.
+    linear_velocity = 0;
+    float actual_slip=0;
+    do{
+      LinearMotor.controlLoop();
+      WheelMotor.controlLoop();
+      //Calculate actual slip
+      linear_velocity = LinearMotor.currentVelocity*belt_spool_diameter;
+      actual_slip = 1-linear_velocity/(w_anglarVelocity*wheel_diameter);
+      //Record data
+      lc_reading = scale.get_units();
+      if(recordData(testFile,actual_slip,linear_velocity,lc_reading)){
+        Serial.println(F("Filewrite successful"));
+      }
+    // The termination of this loop needs to be tested still.
+    }while((LinearMotor.currentPosition/CPR)*belt_spool_diameter>(test_distance/100));//converts current position counts to revolutions, calculates distance based off that and compares
 
-    //Constants
-    int w_angularVelocity = 3; // NOT THE ACTUAL NUMBER DO NOT DO 200!!!!
-    const float radius = 0.073; // in meters
-
-  //Get slip value
-  // Serial.println("Please input slip value: ");
-  // int slipValue = getSerialInput();
-  float slipValue=Test_setup();
-  // float slipValue = 0.5;
-  Serial.println(slipValue);
-
-
-  
-  // float linearVelocity = (1-slipValue)*w_angularVelocity*radius;
-  // float wheelAngularVelocity = linearVelocity*spoolRadius; // not totally sure on this calculation have someone double check
-
-  // int pwmValue = map(wheelAngularVelocity, 0, w_angularVelocity, 0, 255);
-  // pwmValue = constrain(pwmValue, 0, 255); // Ensure within limits
-
-  lc_reading = scale.get_units();
+    //Close file
+    testFile.close();
+    test_started = false;
+  }
 }
 
 /**
@@ -195,11 +171,11 @@ float Test_setup(){
     // display.setTextColor(WHITE);
     // display.println(F("Slip:"));
 
-    if(selector.RotaryPressed()){
-      break;
-    }
-    selector.ReadRotary();
-    slip_ratio = selector.count%21*0.05;
+    // if(selector.RotaryPressed()){
+    //   break;
+    // }
+    // selector.ReadRotary();
+    // slip_ratio = selector.count%21*0.05;
     // Serial.println(selector.count);
     
   //Display the values the user is selecting
@@ -214,7 +190,7 @@ float Test_setup(){
 void motorControlSetup(SpeedControl& controller, const uint8_t pin_dir, const uint8_t pwm_pin, const uint8_t encA_pin, const uint8_t encB_pin, const float KU, const float TU){
   controller.setPin(pin_dir,pwm_pin,encA_pin,encB_pin);//test pins
   controller.setReversePolarity(false);
-  controller.setCPR(2821);
+  controller.setCPR(CPR);
   controller.setMotorMaxSpeed(4.183); //Hz
   controller.setPIDValue(KU*ZN_coeff[0],KU*ZN_coeff[1]/TU,KU*TU*ZN_coeff[2]);
 }
