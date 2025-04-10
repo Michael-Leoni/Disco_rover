@@ -148,8 +148,10 @@ unsigned long previous_time=0;
     WheelMotor.controlLoop();
     //Close file
     testFile.close();
-    LinearMotor.setSpeed(0);
-    WheelMotor.setSpeed(0);
+    LinearMotor.stop();
+    WheelMotor.stop();
+    LinearMotor.reset();
+    WheelMotor.reset();
     test_started = false;
   }
 }
