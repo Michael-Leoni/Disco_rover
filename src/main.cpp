@@ -91,19 +91,10 @@ void setup() {
   // espSerial.begin(9600); //if seeing gibberish change 9600 to 115200
   while (!Serial) {}
 
-  //display initialization
-  // if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
-  //   for(;;); // Don't proceed, loop forever
-  // }
 
   //Motor setup
   motorControlSetup(LinearMotor,2,11,3,7,47,2);
 
-  // display.clearDisplay();
-  // display.drawBitmap(0,0,Mines_Logo,128,32,WHITE);
-  // display.display();  //initialize display upon boot
-  // display.setTextColor(WHITE);
-  // display.setTextSize(1);
 
   //Estop button
 
@@ -111,8 +102,6 @@ void setup() {
 
   //Load cell pins
 
-  //Ammeter pins
-  // pinMode(ammeterPin, INPUT);
   LinearMotor.setSpeed(1);
   
 }
@@ -120,40 +109,8 @@ void setup() {
 void loop() {
   // delay(200);
   LinearMotor.controlLoop();
-  // analogWrite(11,255);
-  // digitalWrite(2,HIGH);
-  Serial.println(LinearMotor.currentVelocity);
-  // analogWrite(11,255);
 
   float spoolRadius = 0.02; //measure and find value (meters) TODO
-
-  //ESP8266 stuff
-  // if (espSerial.available()) {
-  //   Serial.write(espSerial.read());  // Read from ESP8266 and send to Serial Monitor
-  // }
-  
-  // if (Serial.available()) {
-  //   espSerial.write(Serial.read());  // Send Serial Monitor input to ESP8266
-  // }
-
-  //Estop
-
-  //Stop motors
-  // digitalWrite(motor1pin1, LOW);
-  // digitalWrite(motor1pin2, LOW);
-  // digitalWrite(motor2pin1, LOW);
-  // digitalWrite(motor2pin2, LOW);
-  
-  // analogWrite(motor1speedpin, 0);
-  // analogWrite(motor2speedpin, 0);
-
-  // while (true) {
-  // if (digitalRead(eStopPin) == HIGH) {
-  //   Serial.println(F("E-Stop Released. Restart required."));
-  //   delay(1000);
-  //   }
-  // }
-  
 
   //Constants
 
@@ -169,26 +126,7 @@ void loop() {
   // float linearVelocity = (1-slipValue)*w_angularVelocity*radius;
   // float wheelAngularVelocity = linearVelocity*spoolRadius; // not totally sure on this calculation have someone double check
 
-  // int pwmValue = map(wheelAngularVelocity, 0, w_angularVelocity, 0, 255);
-  // pwmValue = constrain(pwmValue, 0, 255); // Ensure within limits
 
-
-  // Serial.println(pwmValue);
-  // linear_motor.setSpeed(255);
-  // linear_motor.run(L298N::FORWARD);
-  // delay(3000);
-  // linear_motor.setSpeed(255);
-
-
-
-  //Move forward
-  // linear_motor.run(L298N::BACKWARD);
-  // delay(3000);
-  // digitalWrite(motor1pin1,  HIGH);
-  // digitalWrite(motor1pin2, LOW);
-  // digitalWrite(motor2pin1, HIGH);
-  // digitalWrite(motor2pin2, LOW);
-  // delay(3000);
 
   //Write in SD card, slip value, linear velocity, force (Load Cell), amperage (ammeter)
 }
