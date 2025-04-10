@@ -54,6 +54,8 @@ File testFile;
 //TEST PARAMETERS
 const float w_anglarVelocity = 3;
 
+const byte start_button = 7;
+
 // const byte eStopPin = 12;
 
 //FUNCTION DECLARATIONS
@@ -102,16 +104,17 @@ void setup() {
 */
 
 bool test_started = false;
+float slipValue = 0;
 void loop() {
 
-  if (test_started){
+
+  if (buttonDebounceCheck(start_button)&&slipValue<=1.0){
     //Initialize the file
     createAndOpen(testFile);
     //Get slip value
+    slipValue+=0.1;
     // Serial.println("Please input slip value: ");
     // int slipValue = getSerialInput();
-    float slipValue=Test_setup();
-    Serial.println(slipValue);
 
     float linear_velocity = ((1-slipValue)*w_anglarVelocity*wheel_diameter); //m/s
     
@@ -121,6 +124,11 @@ void loop() {
     //Actual test running.
     linear_velocity = 0;
     float actual_slip=0;
+
+    delay(20000); //Time for us to clear out.
+    /*
+    * Maybe add some indicator light or some flashing LED to show that the test is starting.
+    */
     do{
       LinearMotor.controlLoop();
       WheelMotor.controlLoop();
@@ -243,5 +251,21 @@ bool createAndOpen(File &newfile){
   newfile.println("Slip value,Linear velocity,Force");
 
 }
-
-
+//only works for one pin b/c of globals but I'm tired.
+unsigned long last_debounce_time = 0;
+unsigned long debounceDelay = 50;
+bool last_reading = 0;
+bool buttonDebounceCheck(const uint8_t pin){
+  bool button_state;
+  bool reading = digitalRead(pin);
+  if(reading != last_reading){
+    last_debounce_time = millis();
+  }
+  if(millis() - last_debounce_time >debounceDelay){
+    if(button_state!=reading){
+      button_state = reading;
+    }
+  }
+  last_reading = reading;
+  return button_state;
+}
