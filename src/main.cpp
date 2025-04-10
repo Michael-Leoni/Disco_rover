@@ -7,6 +7,7 @@
 
 #define LC_CALIBRATION_FACTOR 9771.09643232 // not actual value, just a placeholder for the time being.
 #define CPR 2821
+#define GEAR_RATIO 10
 // #include "RotaryEncoder.h"
 #include <Wire.h>
 
@@ -112,7 +113,7 @@ unsigned long previous_time=0;
     float linear_velocity = ((1-slipValue)*w_anglarVelocity*wheel_diameter); //m/s
     
     LinearMotor.setSpeed(linear_velocity/belt_spool_diameter);
-    WheelMotor.setSpeed(w_anglarVelocity*10);
+    WheelMotor.setSpeed(w_anglarVelocity*GEAR_RATIO);
     WheelMotor.setSpeed(1);
     Serial.println(linear_velocity);
 
@@ -140,8 +141,7 @@ unsigned long previous_time=0;
       Serial.println(LinearMotor.currentPosition);
       // Serial.println((LinearMotor.currentPosition/CPR)*belt_spool_diameter);
     // The termination of this loop needs to be tested still.
-    }while(millis()< 1000 + previous_time);
-    // while((LinearMotor.currentPosition/CPR)*belt_spool_diameter>(test_distance/100));//converts current position counts to revolutions, calculates distance based off that and compares
+    }while((LinearMotor.currentPosition/CPR)*belt_spool_diameter<(test_distance/100));//converts current position counts to revolutions, calculates distance based off that and compares
     LinearMotor.setSpeed(0);
     WheelMotor.setSpeed(0);
     LinearMotor.controlLoop();
@@ -247,13 +247,13 @@ bool createAndOpen(File &newfile){
   if (newfile) {
     Serial.print("Opening: ");
     Serial.print(filename);
+    newfile.println("Slip value,Linear velocity,Force");
     return true;
   }
   else {
     Serial.println("error opening testbench.txt");
     return false;
   }
-  newfile.println("Slip value,Linear velocity,Force");
 
 }
 //only works for one pin b/c of globals but I'm tired.
