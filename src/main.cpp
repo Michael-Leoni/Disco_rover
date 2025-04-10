@@ -22,8 +22,8 @@ const float ZN_coeff[3] = {0.33,0.66,0.11};
 
 //DIMENSIONS
 const float wheel_diameter = 0.13; //Meters
-const float belt_spool_diameter = 16/1000; //M //I DO NOT THINK THIS IS CORRECT
-const float test_distance = 0.5*12*2.54; //CM //This will likely need to be shorter.
+const float belt_spool_diameter = 1.22; //CM //I DO NOT THINK THIS IS CORRECT
+const float test_distance = 12*2.54; //CM //This will likely need to be shorter.
 
 SpeedControl LinearMotor;
 SpeedControl WheelMotor;
@@ -72,7 +72,7 @@ void setup() {
   motorControlSetup(LinearMotor,A0,9,2,A1,47,2);
   motorControlSetup(WheelMotor,1,5,3,A2,47,2);
 
-  delay(1500);
+
 
 
 //Loadcell setup.
@@ -98,13 +98,14 @@ Serial.println(F("initialization done."));
 */
 
 bool test_started = false;
-float slipValue = 0;
+float slipValue = 0.0;
 void loop() {
 
 unsigned long previous_time=0;
   if (buttonDebounceCheck(start_button)&&slipValue<=1.0){
     //Initialize the file
     createAndOpen(testFile);
+
     //Get slip value
     slipValue+=0.1;
     // Serial.println("Please input slip value: ");
@@ -112,10 +113,10 @@ unsigned long previous_time=0;
 
     float linear_velocity = ((1-slipValue)*w_anglarVelocity*wheel_diameter); //m/s
     
-    LinearMotor.setSpeed(linear_velocity/belt_spool_diameter);
+    LinearMotor.setSpeed(linear_velocity*100/(belt_spool_diameter*M_PI));
     WheelMotor.setSpeed(w_anglarVelocity*GEAR_RATIO);
-    WheelMotor.setSpeed(1);
-    Serial.println(linear_velocity);
+    // LinearMotor.setSpeed(0);
+    // WheelMotor.setSpeed(0);
 
     //Actual test running.
     linear_velocity = 0;
@@ -129,9 +130,11 @@ unsigned long previous_time=0;
     do{
       LinearMotor.controlLoop();
       WheelMotor.controlLoop();
+      // LinearMotor.stop();
+      // WheelMotor.stop();
       //Calculate actual slip
-      linear_velocity = LinearMotor.currentVelocity*belt_spool_diameter;
-      actual_slip = 1-linear_velocity/(w_anglarVelocity*wheel_diameter);
+      linear_velocity = LinearMotor.currentVelocity*(belt_spool_diameter*M_PI);
+      actual_slip = 1-linear_velocity/(w_anglarVelocity*wheel_diameter*M_PI);
       //Record data
       lc_reading = scale.get_units();
       Serial.println("Prepping to record");
@@ -139,9 +142,10 @@ unsigned long previous_time=0;
         Serial.println(F("Filewrite successful"));
       }
       Serial.println(LinearMotor.currentPosition);
+      Serial.println((LinearMotor.currentPosition/CPR));
       // Serial.println((LinearMotor.currentPosition/CPR)*belt_spool_diameter);
     // The termination of this loop needs to be tested still.
-    }while((LinearMotor.currentPosition/CPR)*belt_spool_diameter<(test_distance/100));//converts current position counts to revolutions, calculates distance based off that and compares
+    }while((LinearMotor.currentPosition/CPR)*belt_spool_diameter*M_PI<test_distance);//converts current position counts to revolutions, calculates distance based off that and compares
     LinearMotor.setSpeed(0);
     WheelMotor.setSpeed(0);
     LinearMotor.controlLoop();
