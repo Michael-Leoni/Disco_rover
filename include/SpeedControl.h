@@ -147,6 +147,22 @@ public:
   setMotorPWM(outputPWM);
   }
 
+  void stop(){
+    analogWrite(pwmPin,0);
+  }
+
+  void reset(){
+    digitalWrite(dirPin , LOW);
+    analogWrite(pwmPin , 0);
+    // delay(2000);
+    //variables for velocity calculation
+    setPoint  = 0.0;
+    currentPosition = 0;
+    previousPosition = 0;
+    previousTime = micros();
+    currentVelocity = 0;
+    outputPWM  = 0;
+  }
 
 };
 
