@@ -81,7 +81,6 @@ void setup() {
   motorControlSetup(WheelMotor,A0,5,3,A2,47,2);
 
 
-  //Should create a new file.
   
   delay(1500);
 
@@ -113,7 +112,7 @@ void loop() {
     // int slipValue = getSerialInput();
     float slipValue=Test_setup();
     Serial.println(slipValue);
-    
+
     float linear_velocity = ((1-slipValue)*w_anglarVelocity*wheel_diameter); //m/s
     
     LinearMotor.setSpeed(linear_velocity/belt_spool_diameter);
