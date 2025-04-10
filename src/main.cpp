@@ -33,7 +33,6 @@ const float belt_spool_diameter = 0.006; //M //I DO NOT THINK THIS IS CORRECT
 const float test_distance = 2*12*2.54; //CM //This will likely need to be shorter.
 
 SpeedControl LinearMotor;
-SpeedControl WheelMotor;
 
 const byte loadcell_dt = 6;
 const byte loadcell_sck = A0;
@@ -78,7 +77,6 @@ void setup() {
 
   //Motor setup and pins
   motorControlSetup(LinearMotor,A0,9,2,A1,47,2);
-  motorControlSetup(WheelMotor,A0,5,3,A2,47,2);
 
 
   
@@ -89,7 +87,6 @@ void setup() {
   scale.begin(loadcell_dt, loadcell_sck);// TODO look into using the same sck for the SD card.
   scale.set_scale(LC_CALIBRATION_FACTOR);
   scale.tare();
-
   
 }
 
@@ -116,14 +113,12 @@ void loop() {
     float linear_velocity = ((1-slipValue)*w_anglarVelocity*wheel_diameter); //m/s
     
     LinearMotor.setSpeed(linear_velocity/belt_spool_diameter);
-    WheelMotor.setSpeed(w_anglarVelocity);
 
     //Actual test running.
     linear_velocity = 0;
     float actual_slip=0;
     do{
       LinearMotor.controlLoop();
-      WheelMotor.controlLoop();
       //Calculate actual slip
       linear_velocity = LinearMotor.currentVelocity*belt_spool_diameter;
       actual_slip = 1-linear_velocity/(w_anglarVelocity*wheel_diameter);
