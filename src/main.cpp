@@ -2,22 +2,8 @@
 
 //librarys - still need to import
 // #include <SoftwareSerial.h>
-#include <SD.h>
-#include <SPI.h>
-#include <L298N.h>
 #include <Encoder.h>
-#include "RotaryEncoder.h"
-#include <Wire.h>
 #include "SpeedControl.h"
-
-#include<Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
-#define OLED_RESET    -1
-#define SCREEN_ADDRESS 0x3C
-#define SENSOR_ADDRESS 0X38
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 32
-#define RIGHT_OFFSET 55
 
 // // 'Mines-Logo-triangle-blue', 128x32px
 // const unsigned char Mines_Logo[] PROGMEM = {
@@ -72,21 +58,14 @@ const byte motor1pin2 = A0; // may get rid of and short in order to only drive i
 const byte motor1speedpin = 9;
 // L298N linear_motor(motor1speedpin,motor1pin1,motor1pin2);
 // Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT,&Wire, OLED_RESET);
-RotaryEncoder selector(4,A3,7);
 
 const byte motor2pin1 = 1;
 const byte motor2pin2 = A0; // ditto
 const byte motor2speedpin = 5;
-L298N wheel_motor(motor2pin1,motor2pin2, motor2speedpin);
 
-const byte loadcell_dt = 6;
-const byte loadcell_sck = 8;
+const float ZN_coeff[3] = {0.33,0.66,0.11};
 
-const byte sd_cs = 10;
-
-const byte eStopPin = 12;
-
-SpeedControl linearMotorControl;
+SpeedControl LinearMotor;
 
 // SoftwareSerial espSerial(8, A3); //(RX, TX) A voltage divider is needed for the A3 pin
 
@@ -101,9 +80,8 @@ const byte encoder2_dt = 3;
 const byte encoder2_clk = A2;
 // const int ammeterPin = 11;
 
-Encoder LinearMotor_enc(encoder1_dt,encoder1_clk);
-Encoder WheelMotor_enc(encoder2_dt,encoder2_clk);
 
+void motorControlSetup(SpeedControl& controller, const uint8_t pin_dir, const uint8_t pwm_pin, const uint8_t encA_pin, const uint8_t encB_pin, const float KU, const float TU);
 
 
 void setup() {
@@ -119,15 +97,7 @@ void setup() {
   // }
 
   //Motor setup
-  linearMotorControl.setPin(2,11,3,7);//test pins
-  linearMotorControl.setReversePolarity(false);
-  linearMotorControl.setCPR(2821);
-  linearMotorControl.setMotorMaxSpeed(4.183); //Hz
-  const float KU = 47;
-  const float TU = 2;
-  const float ZN_coeff[3] = {0.33*KU,0.66*KU/TU,0.11*TU*KU};
-  linearMotorControl.setPIDValue(ZN_coeff[0],ZN_coeff[1],ZN_coeff[2]);
-
+  motorControlSetup(LinearMotor,2,11,3,7,47,2);
 
   // display.clearDisplay();
   // display.drawBitmap(0,0,Mines_Logo,128,32,WHITE);
@@ -143,16 +113,16 @@ void setup() {
 
   //Ammeter pins
   // pinMode(ammeterPin, INPUT);
-
-  linearMotorControl.setSpeed(3);
+  LinearMotor.setSpeed(1);
+  
 }
 
 void loop() {
   // delay(200);
-  linearMotorControl.controlLoop();
+  LinearMotor.controlLoop();
   // analogWrite(11,255);
   // digitalWrite(2,HIGH);
-  Serial.println(linearMotorControl.currentVelocity);
+  Serial.println(LinearMotor.currentVelocity);
   // analogWrite(11,255);
 
   float spoolRadius = 0.02; //measure and find value (meters) TODO
@@ -223,27 +193,11 @@ void loop() {
   //Write in SD card, slip value, linear velocity, force (Load Cell), amperage (ammeter)
 }
 
-float Test_setup(){
-  float slip_ratio = 0;
-  while(true){
-    // Serial.println(selector.count);
-    // display.clearDisplay();
-    // display.setTextSize(1);
-    // display.setTextColor(WHITE);
-    // display.println(F("Slip:"));
 
-    if(selector.RotaryPressed()){
-      break;
-    }
-    selector.ReadRotary();
-    slip_ratio = selector.count%21*0.05;
-    
-  //Display the values the user is selecting
-    // display.print(slip_ratio);
-    // display.display();
-    // display.setCursor(0,0);
-  }
-  // display.clearDisplay();
-  // display.display();
-  return slip_ratio;
+void motorControlSetup(SpeedControl& controller, const uint8_t pin_dir, const uint8_t pwm_pin, const uint8_t encA_pin, const uint8_t encB_pin, const float KU, const float TU){
+  controller.setPin(pin_dir,pwm_pin,encA_pin,encB_pin);//test pins
+  controller.setReversePolarity(false);
+  controller.setCPR(2821);
+  controller.setMotorMaxSpeed(4.183); //Hz
+  controller.setPIDValue(KU*ZN_coeff[0],KU*ZN_coeff[1]/TU,KU*TU*ZN_coeff[2]);
 }
