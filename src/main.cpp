@@ -112,7 +112,7 @@ unsigned long previous_time=0;
     float linear_velocity = ((1-slipValue)*w_anglarVelocity*wheel_diameter); //m/s
     
     LinearMotor.setSpeed(linear_velocity/belt_spool_diameter);
-    // WheelMotor.setSpeed(w_anglarVelocity);
+    WheelMotor.setSpeed(w_anglarVelocity*10);
     WheelMotor.setSpeed(1);
     Serial.println(linear_velocity);
 
