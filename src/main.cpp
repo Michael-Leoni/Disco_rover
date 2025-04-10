@@ -63,13 +63,14 @@ float Test_setup();
 void motorControlSetup(SpeedControl& controller, const uint8_t pin_dir, const uint8_t pwm_pin, const uint8_t encA_pin, const uint8_t encB_pin, const float KU, const float TU);
 bool createAndOpen(File &newfile);
 bool recordData(File &myfile, float &slipValue, float &linearVelocity, float &Force);
+bool buttonDebounceCheck(uint8_t);
 
 HX711 scale;
 
 float lc_reading=0;
 
 void setup() {
-
+  pinMode(7,INPUT_PULLUP);
   filename[0] = '\0';
   // put your setup code here, to run once:
   Serial.begin(9600);
@@ -92,6 +93,12 @@ void setup() {
   scale.set_scale(LC_CALIBRATION_FACTOR);
   scale.tare();
 
+//SD Setup
+if (!SD.begin(sd_cs)) {
+  Serial.println(F("initialization failed!"));
+  while (1);
+}
+Serial.println(F("initialization done."));
   
 }
 
@@ -106,7 +113,6 @@ void setup() {
 bool test_started = false;
 float slipValue = 0;
 void loop() {
-
 
   if (buttonDebounceCheck(start_button)&&slipValue<=1.0){
     //Initialize the file
@@ -257,7 +263,7 @@ unsigned long debounceDelay = 50;
 bool last_reading = 0;
 bool buttonDebounceCheck(const uint8_t pin){
   bool button_state;
-  bool reading = digitalRead(pin);
+  bool reading = !digitalRead(pin);
   if(reading != last_reading){
     last_debounce_time = millis();
   }
